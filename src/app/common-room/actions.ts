@@ -2,9 +2,7 @@
 
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
-import { put } from '@vercel/blob'
 import { sendNotification } from '@/app/actions/push'
-import { uploadToCloudinary } from '@/lib/cloudinary'
 import { prisma } from '@/lib/prisma'
 
 // --- HELPER: GET CURRENT USER ID ---
@@ -22,45 +20,14 @@ export async function createPost(formData: FormData) {
   if (!userId) return { success: false, message: 'Unauthorized' }
 
   const content = formData.get('content') as string || ""
-  const file = formData.get('file') as File | null 
+  const imageUrl = formData.get('imageUrl') as string | null
+  const videoUrl = formData.get('videoUrl') as string | null
 
   const hasText = content.trim().length > 0
-  const hasFile = file && file.size > 0
+  const hasMedia = !!imageUrl || !!videoUrl
 
-  if (!hasText && !hasFile) {
+  if (!hasText && !hasMedia) {
     return { success: false, message: "Post cannot be empty" }
-  }
-
-  let imageUrl = null
-  let videoUrl = null
-
-  if (hasFile) {
-    const isVideo = file.type.startsWith('video/') || /\.(mov|mp4|webm|3gp)$/i.test(file.name)
-    const isImage = file.type.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp)$/i.test(file.name)
-    
-    if (!isVideo && !isImage) {
-        return { success: false, message: "Invalid file type." }
-    }
-
-    if (isVideo) {
-        // --- VIDEO: Upload to Cloudinary (Auto-Transcode to MP4/H.264) ---
-        try {
-            const result = await uploadToCloudinary(file);
-            videoUrl = result.url;
-        } catch (error) {
-            console.error("Video upload failed:", error);
-            return { success: false, message: "Video upload failed. Check server logs." }
-        }
-    } else {
-        // --- IMAGE: Upload to Vercel Blob (Simple Storage) ---
-        const arrayBuffer = await file.arrayBuffer();
-        const blob = await put(file.name, arrayBuffer, {
-          access: 'public',
-          contentType: file.type || 'image/jpeg',
-          addRandomSuffix: true
-        })
-        imageUrl = blob.url
-    }
   }
 
   const post = await prisma.post.create({

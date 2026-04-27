@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { updateProfilePhoto, updateProfileDetails, updateFamilySecret, getUserActivity } from '@/app/my-room/actions'
+import { getUploadSignature } from '@/app/actions/cloudinary'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link' // <--- 1. Import Link
 import EmojiButton from './EmojiButton'
@@ -98,16 +99,47 @@ export default function MyRoomClient({ user, familySecret }: { user: any, family
   const handleSavePhoto = async () => {
     if (!profileImage) return
     setIsSavingPhoto(true)
-    const formData = new FormData()
-    formData.append('file', profileImage)
-    const result = await updateProfilePhoto(formData)
-    setIsSavingPhoto(false)
-    if (result.success) {
-      alert("Profile photo updated.")
-      setProfileImage(null)
-      router.refresh()
-    } else {
-      alert(result.message)
+
+    try {
+      const { signature, timestamp, cloudName, apiKey, folder } = await getUploadSignature('profile-photos')
+
+      const uploadFormData = new FormData()
+      uploadFormData.append('file', profileImage)
+      uploadFormData.append('api_key', apiKey!)
+      uploadFormData.append('timestamp', timestamp.toString())
+      uploadFormData.append('signature', signature)
+      uploadFormData.append('folder', folder)
+
+      const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`
+
+      const response = await fetch(uploadUrl, {
+        method: 'POST',
+        body: uploadFormData
+      })
+
+      if (!response.ok) {
+        throw new Error('Upload failed')
+      }
+
+      const data = await response.json()
+
+      const formData = new FormData()
+      formData.append('imageUrl', data.secure_url)
+      
+      const result = await updateProfilePhoto(formData)
+
+      if (result.success) {
+        alert("Profile photo updated.")
+        setProfileImage(null)
+        router.refresh()
+      } else {
+        alert(result.message)
+      }
+    } catch (error) {
+      console.error("Profile photo upload error", error)
+      alert("Failed to upload profile photo.")
+    } finally {
+      setIsSavingPhoto(false)
     }
   }
 

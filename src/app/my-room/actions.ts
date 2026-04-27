@@ -1,7 +1,6 @@
 'use server'
 
 import { cookies } from 'next/headers'
-import { put } from '@vercel/blob'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { sendNotification } from '@/app/actions/push'
@@ -14,36 +13,16 @@ export async function updateProfilePhoto(formData: FormData) {
 
   if (!userId) return { success: false, message: "Unauthorized" }
 
-  const imageFile = formData.get('file') as File | null
+  const imageUrl = formData.get('imageUrl') as string | null
 
-  if (!imageFile || imageFile.size === 0) {
+  if (!imageUrl) {
     return { success: false, message: "No image provided" }
   }
 
-  // --- PRODUCTION VALIDATION ---
-  const MAX_SIZE = 4.5 * 1024 * 1024 // 4.5MB (Vercel limit is 4.5MB for serverless bodies)
-  const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
-
-  if (imageFile.size > MAX_SIZE) {
-    return { success: false, message: "File is too large. Max 4.5MB." }
-  }
-  
-  if (!ALLOWED_TYPES.includes(imageFile.type)) {
-    return { success: false, message: "Invalid file type. Only JPG, PNG, WEBP, and GIF are allowed." }
-  }
-
   try {
-    // ✅ FIX: Convert File to Buffer to avoid "stream is not a function" error
-    const arrayBuffer = await imageFile.arrayBuffer()
-
-    const blob = await put(imageFile.name, arrayBuffer, {
-      access: 'public',
-      contentType: imageFile.type // Explicitly set content type since Buffer doesn't have it
-    })
-
     await prisma.user.update({
       where: { id: userId },
-      data: { profileImage: blob.url }
+      data: { profileImage: imageUrl }
     })
 
     revalidatePath('/my-room')
@@ -51,7 +30,7 @@ export async function updateProfilePhoto(formData: FormData) {
     revalidatePath('/family')
     revalidatePath('/') 
 
-    return { success: true, url: blob.url }
+    return { success: true, url: imageUrl }
   } catch (error: any) {
     console.log("Server Error Log:", error);
     // console.error("Upload failed:", error)
