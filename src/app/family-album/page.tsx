@@ -198,7 +198,7 @@ export default function FamilyAlbumPage() {
         }
 
         // 2. Get Signature (with transformation if applicable)
-        const { signature, timestamp, cloudName, apiKey, folder, eager, eager_async } = await getUploadSignature(
+        const { signature, timestamp, cloudName, apiKey, folder, eager } = await getUploadSignature(
           transformation || undefined
         )
         

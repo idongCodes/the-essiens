@@ -10,14 +10,14 @@ export interface UpdateItem {
 }
 
 export const whatsNewData: UpdateItem[] = [
-                                                        {
-    id: 'ui/ux:-autohide-alt-text,-show-alt-text-button',
-    title: 'UI/UX: Autohide alt text, show alt text button',
+                                                          {
+    id: 'update feature:-tap-on-family-postion-text-to-view-user\'s-...',
+    title: 'Update Feature: Tap on Family Postion Text to View User\'s ...',
     description: 'We added some sparkle and magic to make things better!',
     icon: '⚡',
     category: 'update',
     status: 'recently-updated',
-    date: new Date('2026-02-01T10:47:20.096Z'),
+    date: new Date('2026-02-01T10:57:57.524Z'),
     version: '0.1.0'
   },
   {

@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { createPost } from '@/app/common-room/actions'
+import { getUploadSignature } from '@/app/actions/cloudinary'
 import EmojiButton from './EmojiButton'
 import { useToast } from '@/context/ToastContext'
 
@@ -62,11 +63,64 @@ export default function PostInput() {
     if (!content.trim() && !mediaFile) return
     setIsPosting(true)
 
+    let uploadedImageUrl = null
+    let uploadedVideoUrl = null
+
+    if (mediaFile) {
+      try {
+        let transformation = ''
+        if (mediaType === 'video') {
+           transformation = 'vc_h264,ac_aac'
+        }
+
+        const { signature, timestamp, cloudName, apiKey, folder, eager } = await getUploadSignature(
+          'common-room',
+          transformation || undefined
+        )
+
+        const uploadFormData = new FormData()
+        uploadFormData.append('file', mediaFile)
+        uploadFormData.append('api_key', apiKey!)
+        uploadFormData.append('timestamp', timestamp.toString())
+        uploadFormData.append('signature', signature)
+        uploadFormData.append('folder', folder)
+
+        if (eager) {
+          uploadFormData.append('eager', eager)
+          uploadFormData.append('eager_async', 'true')
+        }
+
+        const resourceType = mediaType === 'video' ? 'video' : 'image'
+        const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`
+
+        const response = await fetch(uploadUrl, {
+          method: 'POST',
+          body: uploadFormData
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error?.message || 'Upload failed')
+        }
+
+        const data = await response.json()
+        if (mediaType === 'video') {
+          uploadedVideoUrl = data.secure_url
+        } else {
+          uploadedImageUrl = data.secure_url
+        }
+      } catch (error) {
+        setIsPosting(false)
+        console.error("Upload error", error)
+        toast.error("Failed to upload media.")
+        return
+      }
+    }
+
     const formData = new FormData()
     formData.append('content', content)
-    if (mediaFile) {
-      formData.append('file', mediaFile)
-    }
+    if (uploadedImageUrl) formData.append('imageUrl', uploadedImageUrl)
+    if (uploadedVideoUrl) formData.append('videoUrl', uploadedVideoUrl)
 
     const result = await createPost(formData)
     setIsPosting(false)

@@ -1,7 +1,7 @@
 'use server'
 
 import { prisma } from '@/lib/prisma'
-import { uploadToCloudinary, generateSignature } from '@/lib/cloudinary'
+import { generateSignature } from '@/lib/cloudinary'
 import { revalidatePath } from 'next/cache'
 import { cookies } from 'next/headers'
 
@@ -34,11 +34,20 @@ export async function saveAlbumMedia(data: { url: string, type: string, altText:
     return { success: false, message: 'Unauthorized' }
   }
 
+  let thumbnailUrl = data.url;
+  const parts = data.url.split('/upload/');
+  if (parts.length === 2) {
+      thumbnailUrl = parts[0] + '/upload/c_fill,w_300,h_300/' + parts[1];
+      if (data.type === 'video') {
+          thumbnailUrl = thumbnailUrl.replace(/\.[^/.]+$/, ".jpg");
+      }
+  }
+
   try {
     await prisma.albumMedia.create({
       data: {
         url: data.url,
-        thumbnailUrl: data.url, // For now same as url
+        thumbnailUrl: thumbnailUrl,
         type: data.type,
         altText: data.altText,
         uploaderId: userId
@@ -236,40 +245,3 @@ export async function getAlbumMedia(
   }
 }
 
-export async function uploadAlbumMedia(formData: FormData) {
-  console.log('🚀 uploadAlbumMedia action started')
-  const userId = await getCurrentUserId()
-  if (!userId) {
-    return { success: false, message: 'Unauthorized' }
-  }
-
-  const file = formData.get('file') as File
-  const altText = formData.get('altText') as string
-  const type = formData.get('type') as string // 'image' or 'video'
-
-  if (!file) {
-    return { success: false, message: 'No file provided' }
-  }
-
-  try {
-    // 1. Upload to Cloudinary
-    const uploadResult = await uploadToCloudinary(file, 'family-album')
-    
-    // 2. Save to DB
-    await prisma.albumMedia.create({
-      data: {
-        url: uploadResult.url,
-        thumbnailUrl: uploadResult.url, 
-        type: type,
-        altText: altText,
-        uploaderId: userId
-      }
-    })
-
-    revalidatePath('/family-album')
-    return { success: true }
-  } catch (error) {
-    console.error('Upload error:', error)
-    return { success: false, message: 'Upload failed' }
-  }
-}
