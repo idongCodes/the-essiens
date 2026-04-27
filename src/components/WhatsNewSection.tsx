@@ -43,7 +43,7 @@ export default async function WhatsNewSection() {
             </span>
           </h2>
           <p className="text-slate-600 max-w-2xl mx-auto text-sm">
-            Latest updates and features to keep your family connection stronger than ever.
+            Discover the latest features and improvements that make connecting with your family even better.
           </p>
         </div>
         
