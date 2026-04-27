@@ -4,9 +4,14 @@ import { revalidatePath } from 'next/cache'
 import { sendNotification } from '@/app/actions/push'
 import { prisma } from '@/lib/prisma'
 
-export async function getChatMessages() {
+import { pusherServer } from '@/lib/pusher'
+
+export async function getChatMessages(cursor?: string) {
   try {
+    const limit = 50;
     const messages = await prisma.chatMessage.findMany({
+      take: limit + 1, // Fetch one extra to check if there's a next page
+      ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
       include: {
         author: {
           select: {
@@ -43,11 +48,17 @@ export async function getChatMessages() {
         }
       },
       orderBy: {
-        createdAt: 'asc'
+        createdAt: 'desc' // Fetch newest first for pagination, we will reverse on client
       }
     })
     
-    return { success: true, messages }
+    let nextCursor: string | undefined = undefined;
+    if (messages.length > limit) {
+      const nextItem = messages.pop(); // Remove the extra item
+      nextCursor = nextItem?.id;
+    }
+    
+    return { success: true, messages: messages.reverse(), nextCursor }
   } catch (error) {
     console.error('Error fetching chat messages:', error)
     return { success: false, message: 'Failed to fetch messages' }
@@ -104,6 +115,9 @@ export async function sendChatMessage(content: string, authorId: string, replyTo
     const recipientIds = allUsers.map(u => u.id)
     const authorName = message.author.alias || message.author.firstName
     
+    // Trigger pusher event
+    await pusherServer.trigger('presence-chat', 'new-message', message);
+
     await sendNotification(
       recipientIds, 
       `${authorName}: ${content.substring(0, 50)}${content.length > 50 ? '...' : ''}`,
@@ -154,6 +168,8 @@ export async function toggleReaction(messageId: string, userId: string, emoji: s
         await sendNotification([message.authorId], `${reactorName} reacted ${emoji} to your message`, '/chat')
       }
     }
+
+    await pusherServer.trigger('presence-chat', 'reaction-toggled', { messageId, userId, emoji })
 
     revalidatePath('/chat')
     return { success: true }

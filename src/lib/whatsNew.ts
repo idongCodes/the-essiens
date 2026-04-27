@@ -10,16 +10,16 @@ export interface UpdateItem {
 }
 
 export const whatsNewData: UpdateItem[] = [
-                                                          {
-    id: 'update feature:-tap-on-family-postion-text-to-view-user\'s-...',
-    title: 'Update Feature: Tap on Family Postion Text to View User\'s ...',
+                                                            {
+    id: 'standardize-cloudinary-for-all-media-handling',
+    title: 'Standardize Cloudinary for All Media Handling',
     description: 'We added some sparkle and magic to make things better!',
-    icon: '⚡',
-    category: 'update',
-    status: 'recently-updated',
-    date: new Date('2026-02-01T10:57:57.524Z'),
+    icon: '✨',
+    category: 'feature',
+    status: 'just-released',
+    date: new Date('2026-04-27T03:12:35.288Z'),
     version: '0.1.0'
-  },
+  },},
   {
     id: 'admin-testimonial-management',
     title: 'Easy Content Management',

@@ -2,55 +2,36 @@
 
 import EmojiButton from './EmojiButton'
 import { useRouter } from 'next/navigation'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { XMarkIcon, ArrowUturnLeftIcon } from '@heroicons/react/24/outline'
 import { getChatMessages, sendChatMessage, toggleReaction } from '@/app/chat/actions'
+import { pusherClient } from '@/lib/pusherClient'
 
 export default function ChatModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const router = useRouter()
   const [joinMessage, setJoinMessage] = useState<string | null>(null)
-  const [messages, setMessages] = useState<Array<{
-    id: string
-    content: string
-    author: {
-      id: string
-      firstName: string
-      lastName: string
-      alias: string | null
-      profileImage: string | null
-    }
-    createdAt: Date
-    reactions: Array<{
-      id: string
-      emoji: string
-      userId: string
-      user: {
-        id: string
-        firstName: string
-        alias: string | null
-      }
-    }>
-    replyTo?: {
-      id: string
-      content: string
-      author: {
-        firstName: string
-        alias: string | null
-      }
-    } | null
-  }>>([])
+  const [messages, setMessages] = useState<any[]>([])
   const [inputMessage, setInputMessage] = useState('')
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [currentUser, setCurrentUser] = useState<any>(null)
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null)
   const [replyingTo, setReplyingTo] = useState<{ id: string, content: string, authorName: string } | null>(null)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const [nextCursor, setNextCursor] = useState<string | undefined>(undefined)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(true)
+  const [typingUsers, setTypingUsers] = useState<{[key: string]: string}>({})
+  const [onlineUsers, setOnlineUsers] = useState<any[]>([])
   
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const topRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const channelRef = useRef<any>(null)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+
   // Available reactions
   const REACTION_EMOJIS = ['❤️', '👍', '😂', '😮', '😢']
 
-  // Fetch current user data
   const fetchCurrentUser = async () => {
     if (currentUserId) {
       try {
@@ -65,15 +46,55 @@ export default function ChatModal({ isOpen, onClose }: { isOpen: boolean; onClos
     }
   }
 
-  // Fetch messages from database
-  const fetchMessages = async () => {
+  const fetchInitialMessages = async () => {
     const result = await getChatMessages()
     if (result.success && result.messages) {
-      setMessages(result.messages as any)
+      setMessages(result.messages)
+      setNextCursor(result.nextCursor)
+      setHasMore(!!result.nextCursor)
+      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'auto' }), 10)
     }
   }
-  
-  // Check for join message on mount and when modal opens
+
+  const loadMoreMessages = useCallback(async () => {
+    if (isLoadingMore || !hasMore || !nextCursor) return
+    
+    setIsLoadingMore(true)
+    const prevScrollHeight = scrollContainerRef.current?.scrollHeight || 0
+    
+    const result = await getChatMessages(nextCursor)
+    if (result.success && result.messages) {
+      setMessages(prev => [...result.messages, ...prev])
+      setNextCursor(result.nextCursor)
+      setHasMore(!!result.nextCursor)
+      
+      // Maintain scroll position
+      setTimeout(() => {
+        if (scrollContainerRef.current) {
+          const newScrollHeight = scrollContainerRef.current.scrollHeight
+          scrollContainerRef.current.scrollTop = newScrollHeight - prevScrollHeight
+        }
+      }, 0)
+    }
+    setIsLoadingMore(false)
+  }, [isLoadingMore, hasMore, nextCursor])
+
+  // Intersection Observer for Infinite Scroll
+  useEffect(() => {
+    if (!isOpen) return
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
+        loadMoreMessages()
+      }
+    }, { threshold: 0.1 })
+    
+    if (topRef.current) {
+      observer.observe(topRef.current)
+    }
+    
+    return () => observer.disconnect()
+  }, [loadMoreMessages, hasMore, isLoadingMore, isOpen])
+
   useEffect(() => {
     if (isOpen) {
       const message = document.cookie
@@ -82,7 +103,7 @@ export default function ChatModal({ isOpen, onClose }: { isOpen: boolean; onClos
         ?.split('=')[1]
       
       if (message) {
-        setJoinMessage(decodeURIComponent(message))
+        setTimeout(() => setJoinMessage(decodeURIComponent(message)), 0)
         document.cookie = 'new_user_join_message=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
       }
       
@@ -90,7 +111,7 @@ export default function ChatModal({ isOpen, onClose }: { isOpen: boolean; onClos
         setJoinMessage("Idong has joined the app! 🎉")
       }
 
-      fetchMessages()
+      fetchInitialMessages()
       
       const getSessionId = () => {
         const cookies = document.cookie.split('; ')
@@ -113,16 +134,74 @@ export default function ChatModal({ isOpen, onClose }: { isOpen: boolean; onClos
     }
   }, [isOpen])
 
-  // Poll for new messages every 5 seconds
+  // Pusher Subscription
   useEffect(() => {
-    if (!isOpen) return
-    const interval = setInterval(fetchMessages, 5000)
-    return () => clearInterval(interval)
-  }, [isOpen])
+    if (!isOpen || !currentUserId) return
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+    const channel = pusherClient.subscribe('presence-chat')
+    channelRef.current = channel
+
+    channel.bind('pusher:subscription_succeeded', (members: any) => {
+      const users = Object.keys(members.members).map(id => members.members[id])
+      setOnlineUsers(users)
+    })
+
+    channel.bind('pusher:member_added', (member: any) => {
+      setOnlineUsers(prev => [...prev, member.info])
+    })
+
+    channel.bind('pusher:member_removed', (member: any) => {
+      setOnlineUsers(prev => prev.filter(u => u.user_id !== member.id))
+    })
+
+    channel.bind('new-message', (data: any) => {
+      setMessages(prev => {
+        // If message already exists (optimistic), replace it
+        if (prev.some(m => m.id === data.id || m.content === data.content && m.author.id === data.author.id && new Date(m.createdAt).getTime() > Date.now() - 5000)) {
+          return prev.map(m => m.id === data.id || (m.content === data.content && m.author.id === data.author.id) ? data : m)
+        }
+        return [...prev, data]
+      })
+      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 10)
+    })
+
+    channel.bind('reaction-toggled', (data: any) => {
+      setMessages(prev => prev.map(msg => {
+        if (msg.id === data.messageId) {
+          const existing = msg.reactions?.find((r: any) => r.userId === data.userId && r.emoji === data.emoji)
+          if (existing) {
+            return { ...msg, reactions: msg.reactions.filter((r: any) => r.id !== existing.id) }
+          } else {
+            return {
+              ...msg,
+              reactions: [...(msg.reactions || []), {
+                id: 'temp-' + Date.now(),
+                emoji: data.emoji,
+                userId: data.userId,
+                // Partial user data, real data syncs on next reload or we can fetch, but we only need it for counting
+              }]
+            }
+          }
+        }
+        return msg
+      }))
+    })
+
+    channel.bind('client-typing', (data: { userId: string, name: string }) => {
+      setTypingUsers(prev => ({ ...prev, [data.userId]: data.name }))
+      setTimeout(() => {
+        setTypingUsers(prev => {
+          const newTyping = { ...prev }
+          delete newTyping[data.userId]
+          return newTyping
+        })
+      }, 3000)
+    })
+
+    return () => {
+      pusherClient.unsubscribe('presence-chat')
+    }
+  }, [isOpen, currentUserId])
 
   // Close reaction picker when clicking outside
   useEffect(() => {
@@ -141,12 +220,11 @@ export default function ChatModal({ isOpen, onClose }: { isOpen: boolean; onClos
         id: replyingTo.id,
         content: replyingTo.content,
         author: {
-          firstName: replyingTo.authorName.split(' ')[0], // Approximate
+          firstName: replyingTo.authorName.split(' ')[0], 
           alias: replyingTo.authorName
         }
       } : null
 
-      // 1. Optimistic Update
       const tempMessage = {
         id: tempId,
         content: messageContent,
@@ -162,26 +240,19 @@ export default function ChatModal({ isOpen, onClose }: { isOpen: boolean; onClos
         replyTo: replyContext
       }
 
-      setMessages(prev => [...prev, tempMessage as any])
+      setMessages(prev => [...prev, tempMessage])
       setInputMessage('')
       setReplyingTo(null)
       
-      // Scroll to bottom
       setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 10)
 
       try {
-        // 2. Server Request
         const result = await sendChatMessage(messageContent, currentUserId, replyingTo?.id)
         
-        if (result.success && result.message) {
-          // 3. Success: Replace temp message with real one (or just fetch fresh)
-          // We'll fetch fresh to be safe and get consistent server timestamps/IDs
-          fetchMessages()
-        } else {
+        if (!result.success) {
           console.error('Failed to send message:', result.message)
-          // Revert on failure
           setMessages(prev => prev.filter(m => m.id !== tempId))
-          setInputMessage(messageContent) // Restore input
+          setInputMessage(messageContent) 
           alert("Failed to send message. Please try again.")
         }
       } catch (error) {
@@ -192,17 +263,31 @@ export default function ChatModal({ isOpen, onClose }: { isOpen: boolean; onClos
     }
   }
 
+  const handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputMessage(e.target.value)
+    
+    if (channelRef.current && currentUser) {
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+      
+      channelRef.current.trigger('client-typing', {
+        userId: currentUserId,
+        name: currentUser.alias || currentUser.firstName
+      })
+      
+      typingTimeoutRef.current = setTimeout(() => {}, 3000)
+    }
+  }
+
   const handleReaction = async (messageId: string, emoji: string) => {
     if (!currentUserId) return
     
-    // Optimistic update
     setMessages(prev => prev.map(msg => {
       if (msg.id === messageId) {
-        const existingReaction = msg.reactions?.find(r => r.userId === currentUserId && r.emoji === emoji)
+        const existingReaction = msg.reactions?.find((r: any) => r.userId === currentUserId && r.emoji === emoji)
         if (existingReaction) {
            return {
              ...msg,
-             reactions: msg.reactions.filter(r => r.id !== existingReaction.id)
+             reactions: msg.reactions.filter((r: any) => r.id !== existingReaction.id)
            }
         } else {
            return {
@@ -220,7 +305,6 @@ export default function ChatModal({ isOpen, onClose }: { isOpen: boolean; onClos
     }))
 
     await toggleReaction(messageId, currentUserId, emoji)
-    fetchMessages() // Sync with server
   }
 
   const handleReply = (message: any) => {
@@ -290,7 +374,7 @@ export default function ChatModal({ isOpen, onClose }: { isOpen: boolean; onClos
       )
     }
     
-    const initial = (author.alias || author.firstName)[0].toUpperCase()
+    const initial = (author.alias || author.firstName || 'U')[0].toUpperCase()
     return (
       <div className={`${sizeClasses} rounded-full bg-brand-sky text-white flex items-center justify-center font-bold cursor-pointer`} onClick={onClick}>
         {initial}
@@ -301,8 +385,10 @@ export default function ChatModal({ isOpen, onClose }: { isOpen: boolean; onClos
   const handleUserClick = (author: any) => {
     onClose()
     const displayName = author.alias || author.firstName
-    const user = displayName.toLowerCase().replace(/\s+/g, '-').trim()
-    router.push(`/${user}s-room`)
+    if(displayName){
+        const user = displayName.toLowerCase().replace(/\s+/g, '-').trim()
+        router.push(`/${user}s-room`)
+    }
   }
 
   const renderSystemMessage = (message: string, time: Date) => {
@@ -316,7 +402,6 @@ export default function ChatModal({ isOpen, onClose }: { isOpen: boolean; onClos
     )
   }
 
-  // Group reactions by emoji
   const getGroupedReactions = (reactions: any[]) => {
     if (!reactions || reactions.length === 0) return []
     const groups: {[key: string]: any[]} = {}
@@ -343,6 +428,9 @@ export default function ChatModal({ isOpen, onClose }: { isOpen: boolean; onClos
           <div className="flex items-center gap-3">
             <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
             <h2 className="text-lg font-bold">Family Chat</h2>
+            <span className="text-xs font-medium bg-white/20 px-2 py-0.5 rounded-full ml-2">
+              {onlineUsers.length} Online
+            </span>
           </div>
           <button
             onClick={onClose}
@@ -353,16 +441,22 @@ export default function ChatModal({ isOpen, onClose }: { isOpen: boolean; onClos
         </div>
         
         {/* Chat Messages Area */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50">
+        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50">
+          
+          <div ref={topRef} className="h-4 w-full" />
+          {isLoadingMore && <div className="text-center text-xs text-slate-400">Loading older messages...</div>}
+
           {/* Welcome Message */}
-          <div className="text-center py-8">
-            <div className="text-6xl mb-4">💬</div>
-            <h3 className="text-xl font-bold text-slate-800 mb-2">Welcome to Family Chat</h3>
-            <p className="text-slate-600 max-w-md mx-auto">
-              Start conversations with your family members. This is a safe space for family discussions.
-            </p>
-            <p className="text-xs text-slate-400 mt-2">{formatDate(now)} • {formatTime(now)}</p>
-          </div>
+          {!hasMore && (
+            <div className="text-center py-8">
+              <div className="text-6xl mb-4">💬</div>
+              <h3 className="text-xl font-bold text-slate-800 mb-2">Welcome to Family Chat</h3>
+              <p className="text-slate-600 max-w-md mx-auto">
+                Start conversations with your family members. This is a safe space for family discussions.
+              </p>
+              <p className="text-xs text-slate-400 mt-2">{formatDate(now)} • {formatTime(now)}</p>
+            </div>
+          )}
           
           <div className="flex items-center gap-4 my-4">
             <div className="flex-1 h-px bg-slate-300"></div>
@@ -460,7 +554,7 @@ export default function ChatModal({ isOpen, onClose }: { isOpen: boolean; onClos
                       {groupedReactions.length > 0 && (
                         <div className={`flex flex-wrap gap-1 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
                           {groupedReactions.map(({ emoji, count, users }) => {
-                             const userReacted = users.some(u => u.userId === currentUserId)
+                             const userReacted = users.some((u: any) => u.userId === currentUserId)
                              return (
                                <button
                                  key={emoji}
@@ -486,6 +580,19 @@ export default function ChatModal({ isOpen, onClose }: { isOpen: boolean; onClos
                 </div>
               )
             })}
+            
+            {/* Typing Indicator */}
+            {Object.keys(typingUsers).length > 0 && (
+              <div className="flex items-center gap-2 text-slate-400 text-xs italic px-4">
+                <span>{Object.values(typingUsers).join(', ')} {Object.values(typingUsers).length === 1 ? 'is' : 'are'} typing</span>
+                <span className="flex gap-1">
+                  <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></span>
+                  <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
+                  <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></span>
+                </span>
+              </div>
+            )}
+            
             <div ref={messagesEndRef} />
           </div>
         </div>
@@ -516,7 +623,7 @@ export default function ChatModal({ isOpen, onClose }: { isOpen: boolean; onClos
                   type="text"
                   placeholder="Type a message..."
                   value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
+                  onChange={handleTyping}
                   onKeyUp={handleKeyPress}
                   className="flex-1 bg-transparent text-sm focus:outline-none min-h-[2.5rem]"
                 />
