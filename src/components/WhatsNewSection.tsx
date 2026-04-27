@@ -1,9 +1,7 @@
-'use client'
+import { getRecentAppUpdates } from '@/app/actions/whatsNew'
 
-import { getRecentUpdates } from '@/lib/whatsNew'
-
-export default function WhatsNewSection() {
-  const recentUpdates = getRecentUpdates(3)
+export default async function WhatsNewSection() {
+  const recentUpdates = await getRecentAppUpdates(3)
 
   const getStatusBadge = (status: string) => {
     switch (status) {

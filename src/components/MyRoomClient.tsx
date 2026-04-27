@@ -10,6 +10,7 @@ import StatusBadge from './StatusBadge'
 import FamilyPositionIcon from './FamilyPositionIcon'
 import { compressImage } from '@/lib/imageUtils'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
+import AdminAppUpdateForm from './AdminAppUpdateForm'
 
 export default function MyRoomClient({ user, familySecret }: { user: any, familySecret: string }) {
   const router = useRouter()
@@ -410,6 +411,9 @@ export default function MyRoomClient({ user, familySecret }: { user: any, family
         <button onClick={() => setActiveTab('mirror')} className={`pb-4 px-6 font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'mirror' ? 'border-b-4 border-brand-pink text-brand-pink' : 'text-slate-400 hover:text-slate-600'}`}>My Mirror</button>
         <button onClick={() => setActiveTab('activity')} className={`pb-4 px-6 font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'activity' ? 'border-b-4 border-violet-500 text-violet-500' : 'text-slate-400 hover:text-slate-600'}`}>Activity</button>
         <button onClick={() => setActiveTab('settings')} className={`pb-4 px-6 font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'settings' ? 'border-b-4 border-brand-yellow text-brand-yellow' : 'text-slate-400 hover:text-slate-600'}`}>Settings</button>
+        {isAdmin && (
+          <button onClick={() => setActiveTab('admin')} className={`pb-4 px-6 font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'admin' ? 'border-b-4 border-red-500 text-red-500' : 'text-slate-400 hover:text-slate-600'}`}>Admin</button>
+        )}
       </div>
 
       {activeTab === 'dashboard' && (
@@ -810,6 +814,12 @@ export default function MyRoomClient({ user, familySecret }: { user: any, family
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {activeTab === 'admin' && isAdmin && (
+        <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 animate-fade-in space-y-8">
+          <AdminAppUpdateForm />
         </div>
       )}
     </div>

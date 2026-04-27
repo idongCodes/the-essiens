@@ -159,12 +159,43 @@ model SystemSettings {
 }
 
 model AlbumMedia {
+
   id           String   @id @default(cuid())
+
   url          String
+
   thumbnailUrl String?
+
   type         String
+
   altText      String
+
   createdAt    DateTime @default(now())
+
   uploaderId   String
+
   uploader     User     @relation(fields: [uploaderId], references: [id])
+
+}
+
+
+
+model AppUpdate {
+
+  id          String   @id @default(cuid())
+
+  title       String
+
+  description String
+
+  icon        String   @default("✨")
+
+  category    String
+
+  status      String   @default("just-released")
+
+  version     String?
+
+  createdAt   DateTime @default(now())
+
 }
