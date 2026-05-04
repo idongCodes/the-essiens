@@ -177,3 +177,58 @@ export async function getUserActivity() {
     return { success: false, message: "Failed to load activity" }
   }
 }
+
+// --- 5. ADMIN ADD USER ---
+export async function adminAddUser(formData: FormData) {
+  const cookieStore = await cookies()
+  const userId = cookieStore.get('session_id')?.value
+  const ADMIN_EMAIL = 'idongesit_essien@ymail.com'
+
+  if (!userId) return { success: false, message: "Unauthorized" }
+
+  const adminUser = await prisma.user.findUnique({ where: { id: userId } })
+  if (adminUser?.email?.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+    return { success: false, message: "Only Admin can add users." }
+  }
+
+  const firstName = formData.get('firstName') as string
+  const lastName = formData.get('lastName') as string
+  const alias = formData.get('alias') as string || firstName
+  const email = formData.get('email') as string
+  const phone = formData.get('phone') as string
+  const position = formData.get('position') as string
+
+  if (!firstName || !lastName || !email || !position) {
+    return { success: false, message: "Missing required fields." }
+  }
+
+  const existingUser = await prisma.user.findUnique({ where: { email } })
+  if (existingUser) {
+    return { success: false, message: "A user with this email already exists." }
+  }
+
+  try {
+    const newUser = await prisma.user.create({
+      data: { firstName, lastName, alias, email, phone, position }
+    })
+    
+    // Notify others
+    const allOtherUsers = await prisma.user.findMany({
+      where: { id: { not: newUser.id } },
+      select: { id: true }
+    })
+    
+    if (allOtherUsers.length > 0) {
+      const userIds = allOtherUsers.map(u => u.id)
+      const displayName = alias || firstName
+      await sendNotification(userIds, `${displayName} was added to the family! 🎉`, '/family')
+    }
+
+    revalidatePath('/family')
+    revalidatePath('/my-room')
+    return { success: true }
+  } catch (error) {
+    console.error("Admin Add User Error:", error)
+    return { success: false, message: "Failed to add user." }
+  }
+}

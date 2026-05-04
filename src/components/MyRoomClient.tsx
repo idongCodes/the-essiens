@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { updateProfilePhoto, updateProfileDetails, updateFamilySecret, getUserActivity } from '@/app/my-room/actions'
+import { updateProfilePhoto, updateProfileDetails, updateFamilySecret, getUserActivity, adminAddUser } from '@/app/my-room/actions'
+import { deleteUser } from '@/app/family/actions'
 import { getUploadSignature } from '@/app/actions/cloudinary'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link' // <--- 1. Import Link
@@ -12,7 +13,7 @@ import { compressImage } from '@/lib/imageUtils'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 import AdminAppUpdateForm from './AdminAppUpdateForm'
 
-export default function MyRoomClient({ user, familySecret }: { user: any, familySecret: string }) {
+export default function MyRoomClient({ user, familySecret, allUsers = [] }: { user: any, familySecret: string, allUsers?: any[] }) {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState('dashboard')
   const { subscribe, isSubscribed, permission } = usePushNotifications()
@@ -71,6 +72,42 @@ export default function MyRoomClient({ user, familySecret }: { user: any, family
 
   const ADMIN_EMAIL = 'idongesit_essien@ymail.com'
   const isAdmin = user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()
+
+  // --- ADMIN USER MANAGEMENT STATE ---
+  const [isAddingUser, setIsAddingUser] = useState(false)
+  const [isSubmittingUser, setIsSubmittingUser] = useState(false)
+  const [userError, setUserError] = useState('')
+  const [newUser, setNewUser] = useState({ firstName: '', lastName: '', alias: '', email: '', phone: '', position: '' })
+
+  const handleAddUser = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSubmittingUser(true)
+    setUserError('')
+    
+    const formData = new FormData()
+    Object.entries(newUser).forEach(([k, v]) => formData.append(k, v))
+    
+    const res = await adminAddUser(formData)
+    setIsSubmittingUser(false)
+    if (res.success) {
+      setNewUser({ firstName: '', lastName: '', alias: '', email: '', phone: '', position: '' })
+      setIsAddingUser(false)
+      alert("User added successfully!")
+    } else {
+      setUserError(res.message || "Error adding user.")
+    }
+  }
+
+  const handleDeleteUserClick = async (id: string, name: string) => {
+    if (window.confirm(`Are you absolutely sure you want to permanently delete ${name}? This cannot be undone.`)) {
+      try {
+        await deleteUser(id)
+        alert(`${name} was deleted.`)
+      } catch (err: any) {
+        alert(err.message || "Failed to delete user.")
+      }
+    }
+  }
 
   // --- HANDLERS ---
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -818,7 +855,122 @@ export default function MyRoomClient({ user, familySecret }: { user: any, family
       )}
 
       {activeTab === 'admin' && isAdmin && (
-        <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 animate-fade-in space-y-8">
+        <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 animate-fade-in space-y-12">
+          
+          {/* USER MANAGEMENT SECTION */}
+          <div>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                <span>👥</span> User Management
+              </h3>
+              <button 
+                onClick={() => setIsAddingUser(!isAddingUser)}
+                className="bg-brand-sky text-white px-4 py-2 rounded-full text-sm font-bold shadow hover:bg-sky-500 transition-colors"
+              >
+                {isAddingUser ? 'Cancel' : '+ Add User'}
+              </button>
+            </div>
+
+            {isAddingUser && (
+              <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 mb-8 animate-in slide-in-from-top-4">
+                <h4 className="font-bold text-brand-sky mb-4">Add New Family Member</h4>
+                <form onSubmit={handleAddUser} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input 
+                      type="text" placeholder="First Name" required
+                      value={newUser.firstName} onChange={e => setNewUser({...newUser, firstName: e.target.value})}
+                      className="p-3 rounded-lg border focus:ring-2 focus:ring-brand-sky outline-none w-full"
+                    />
+                    <input 
+                      type="text" placeholder="Last Name" required
+                      value={newUser.lastName} onChange={e => setNewUser({...newUser, lastName: e.target.value})}
+                      className="p-3 rounded-lg border focus:ring-2 focus:ring-brand-sky outline-none w-full"
+                    />
+                    <input 
+                      type="email" placeholder="Email" required
+                      value={newUser.email} onChange={e => setNewUser({...newUser, email: e.target.value})}
+                      className="p-3 rounded-lg border focus:ring-2 focus:ring-brand-sky outline-none w-full"
+                    />
+                    <input 
+                      type="tel" placeholder="Phone"
+                      value={newUser.phone} onChange={e => setNewUser({...newUser, phone: e.target.value})}
+                      className="p-3 rounded-lg border focus:ring-2 focus:ring-brand-sky outline-none w-full"
+                    />
+                    <input 
+                      type="text" placeholder="Alias / Nickname (Optional)"
+                      value={newUser.alias} onChange={e => setNewUser({...newUser, alias: e.target.value})}
+                      className="p-3 rounded-lg border focus:ring-2 focus:ring-brand-sky outline-none w-full"
+                    />
+                    <input 
+                      type="text" placeholder="Relation to Mercy" required
+                      value={newUser.position} onChange={e => setNewUser({...newUser, position: e.target.value})}
+                      className="p-3 rounded-lg border focus:ring-2 focus:ring-brand-sky outline-none w-full"
+                    />
+                  </div>
+                  {userError && <p className="text-red-500 text-sm font-bold">{userError}</p>}
+                  <div className="flex justify-end">
+                    <button 
+                      type="submit" disabled={isSubmittingUser}
+                      className="bg-brand-sky text-white px-6 py-2 rounded-lg font-bold hover:bg-sky-500 transition-colors disabled:opacity-50"
+                    >
+                      {isSubmittingUser ? 'Adding...' : 'Save User'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            <div className="overflow-x-auto border rounded-xl shadow-sm">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-100 border-b border-slate-200">
+                    <th className="p-4 font-bold text-slate-600">User</th>
+                    <th className="p-4 font-bold text-slate-600">Email</th>
+                    <th className="p-4 font-bold text-slate-600 hidden md:table-cell">Position</th>
+                    <th className="p-4 font-bold text-slate-600 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white">
+                  {allUsers?.map((u) => (
+                    <tr key={u.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                      <td className="p-4 font-medium flex items-center gap-3">
+                         <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-200 flex-shrink-0">
+                           {u.profileImage ? (
+                             <img src={u.profileImage} alt={u.firstName} className="w-full h-full object-cover" />
+                           ) : (
+                             <span className="w-full h-full flex items-center justify-center text-slate-500 font-bold text-xs">{u.firstName[0]}</span>
+                           )}
+                         </div>
+                         {u.firstName} {u.lastName} {u.alias && <span className="text-slate-400 text-sm font-normal">({u.alias})</span>}
+                      </td>
+                      <td className="p-4 text-slate-600">{u.email}</td>
+                      <td className="p-4 text-slate-600 hidden md:table-cell">{u.position}</td>
+                      <td className="p-4 text-right">
+                        {u.email !== ADMIN_EMAIL ? (
+                          <button 
+                            onClick={() => handleDeleteUserClick(u.id, u.firstName)}
+                            className="text-red-500 hover:text-red-700 font-medium text-sm transition-colors"
+                          >
+                            Delete
+                          </button>
+                        ) : (
+                          <span className="text-slate-400 text-xs uppercase font-bold">Admin</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                  {allUsers?.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="p-8 text-center text-slate-500 italic">No users found.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          
+          <hr className="border-slate-100" />
+          
           <AdminAppUpdateForm />
         </div>
       )}
