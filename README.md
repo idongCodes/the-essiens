@@ -1,4 +1,4 @@
-# 💖 LoveMyFam (LMF)
+# 💖 The Essiens (LMF)
 
 ### "A safe space for family. No strangers. No public. Just family."
 
@@ -6,7 +6,7 @@
 
 ## 💡 The Mission
 
-In the age of endless notifications and cluttered group chats, staying genuinely connected with family often feels like a chore. **LoveMyFam** is designed to eliminate the friction and fatigue of modern communication methods—no more long, unplanned phone calls or searching through hundreds of text messages for one update.
+In the age of endless notifications and cluttered group chats, staying genuinely connected with family often feels like a chore. **The Essiens** is designed to eliminate the friction and fatigue of modern communication methods—no more long, unplanned phone calls or searching through hundreds of text messages for one update.
 
 LMF provides a private, asynchronous space built to facilitate **genuine and lasting communication** among family members.
 
@@ -33,7 +33,7 @@ As an ongoing project driven by continuous learning, the current feature set foc
 
 ## 🚀 The Development Journey
 
-This project serves as a commitment to my ongoing growth as a full-stack developer. Building **LoveMyFam** allows me to integrate and master key concepts as I learn them.
+This project serves as a commitment to my ongoing growth as a full-stack developer. Building **The Essiens** allows me to integrate and master key concepts as I learn them.
 
 | Technology Focus | Status & Goal |
 | :--- | :--- |

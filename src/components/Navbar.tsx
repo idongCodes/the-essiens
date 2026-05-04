@@ -136,12 +136,12 @@ export default function Navbar() {
           <Link href="/" className="flex items-center gap-2 text-white font-bold text-lg tracking-tight hover:text-brand-cream transition-colors drop-shadow-sm">
             <Image
               src="/images/logo.png"
-              alt="LoveMyFam Logo"
+              alt="The Essiens Logo"
               width={32}
               height={32}
               className="w-8 h-8 object-cover rounded-full"
             />
-            LoveMyFam
+            The Essiens
           </Link>
 
           <div className="flex items-center gap-4">

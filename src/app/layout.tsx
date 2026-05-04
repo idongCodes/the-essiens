@@ -23,7 +23,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LoveMyFam | Welcome Home!",
+  title: "The Essiens | Welcome Home!",
   description: "A safe space for family.",
   colorScheme: "light",
   themeColor: [
@@ -76,7 +76,7 @@ export default async function RootLayout({
                   <FeedbackWidget />
                 </div>
 
-                <p className="font-medium">© {new Date().getFullYear()} LoveMyFam.</p>
+                <p className="font-medium">© {new Date().getFullYear()} The Essiens.</p>
                 <p className="text-sm text-slate-500 mt-2">
                   Built with ❤️ by{' '}
                   <a 
