@@ -957,115 +957,112 @@ export default function MyRoomClient({ user, familySecret, allUsers = [] }: { us
               </div>
             )}
 
-            <div className="overflow-x-auto border rounded-xl shadow-sm">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-slate-100 border-b border-slate-200">
-                    <th className="p-4 font-bold text-slate-600">User</th>
-                    <th className="p-4 font-bold text-slate-600">Email</th>
-                    <th className="p-4 font-bold text-slate-600 hidden md:table-cell">Position</th>
-                    <th className="p-4 font-bold text-slate-600 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white">
-                  {allUsers?.map((u) => (
-                    <tr key={u.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                      {editingUserId === u.id ? (
-                        <td colSpan={4} className="p-4 bg-slate-50">
-                          <form onSubmit={handleEditUserSubmit} className="flex flex-col gap-4 bg-white p-4 rounded-xl border border-slate-200">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <input 
-                                type="text" placeholder="First Name" required
-                                value={editUserData.firstName} onChange={e => setEditUserData({...editUserData, firstName: e.target.value})}
-                                className="p-2 border rounded outline-none focus:ring-2 focus:ring-brand-sky"
-                              />
-                              <input 
-                                type="text" placeholder="Last Name" required
-                                value={editUserData.lastName} onChange={e => setEditUserData({...editUserData, lastName: e.target.value})}
-                                className="p-2 border rounded outline-none focus:ring-2 focus:ring-brand-sky"
-                              />
-                              <input 
-                                type="email" placeholder="Email" required
-                                value={editUserData.email} onChange={e => setEditUserData({...editUserData, email: e.target.value})}
-                                className="p-2 border rounded outline-none focus:ring-2 focus:ring-brand-sky"
-                              />
-                              <input 
-                                type="tel" placeholder="Phone"
-                                value={editUserData.phone} onChange={e => setEditUserData({...editUserData, phone: e.target.value})}
-                                className="p-2 border rounded outline-none focus:ring-2 focus:ring-brand-sky"
-                              />
-                              <input 
-                                type="text" placeholder="Alias (Optional)"
-                                value={editUserData.alias} onChange={e => setEditUserData({...editUserData, alias: e.target.value})}
-                                className="p-2 border rounded outline-none focus:ring-2 focus:ring-brand-sky"
-                              />
-                              <input 
-                                type="text" placeholder="Relation to Mercy" required
-                                value={editUserData.position} onChange={e => setEditUserData({...editUserData, position: e.target.value})}
-                                className="p-2 border rounded outline-none focus:ring-2 focus:ring-brand-sky"
-                              />
-                            </div>
-                            <div className="flex justify-end gap-2">
-                              <button 
-                                type="button" onClick={() => setEditingUserId(null)}
-                                className="px-4 py-2 text-slate-500 font-bold hover:bg-slate-100 rounded-lg"
-                              >
-                                Cancel
-                              </button>
-                              <button 
-                                type="submit" disabled={isSubmittingUser}
-                                className="px-4 py-2 bg-brand-sky text-white font-bold rounded-lg hover:bg-sky-500 disabled:opacity-50"
-                              >
-                                {isSubmittingUser ? 'Saving...' : 'Save'}
-                              </button>
-                            </div>
-                          </form>
-                        </td>
-                      ) : (
-                        <>
-                          <td className="p-4 font-medium flex items-center gap-3">
-                             <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-200 flex-shrink-0">
-                               {u.profileImage ? (
-                                 <img src={u.profileImage} alt={u.firstName} className="w-full h-full object-cover" />
-                               ) : (
-                                 <span className="w-full h-full flex items-center justify-center text-slate-500 font-bold text-xs">{u.firstName[0]}</span>
-                               )}
-                             </div>
-                             {u.firstName} {u.lastName} {u.alias && <span className="text-slate-400 text-sm font-normal">({u.alias})</span>}
-                          </td>
-                          <td className="p-4 text-slate-600">{u.email}</td>
-                          <td className="p-4 text-slate-600 hidden md:table-cell">{u.position}</td>
-                          <td className="p-4 text-right">
-                            {u.email !== ADMIN_EMAIL ? (
-                              <div className="flex justify-end gap-3">
-                                <button 
-                                  onClick={() => handleEditUserClick(u)}
-                                  className="text-brand-sky hover:text-sky-700 font-medium text-sm transition-colors"
-                                >
-                                  Edit
-                                </button>
-                                <button 
-                                  onClick={() => handleDeleteUserClick(u.id, u.firstName)}
-                                  className="text-red-500 hover:text-red-700 font-medium text-sm transition-colors"
-                                >
-                                  Delete
-                                </button>
-                              </div>
+            <div className="border rounded-xl shadow-sm bg-white overflow-hidden">
+              <div className="hidden md:grid grid-cols-4 gap-4 p-4 bg-slate-100 border-b border-slate-200 font-bold text-slate-600">
+                <div>User</div>
+                <div>Email</div>
+                <div>Position</div>
+                <div className="text-right">Actions</div>
+              </div>
+              <div className="flex flex-col divide-y divide-slate-100">
+                {allUsers?.map((u) => (
+                  <div key={u.id} className="p-4 hover:bg-slate-50 transition-colors">
+                    {editingUserId === u.id ? (
+                      <form onSubmit={handleEditUserSubmit} className="flex flex-col gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <input 
+                            type="text" placeholder="First Name" required
+                            value={editUserData.firstName} onChange={e => setEditUserData({...editUserData, firstName: e.target.value})}
+                            className="p-2 border rounded outline-none focus:ring-2 focus:ring-brand-sky"
+                          />
+                          <input 
+                            type="text" placeholder="Last Name" required
+                            value={editUserData.lastName} onChange={e => setEditUserData({...editUserData, lastName: e.target.value})}
+                            className="p-2 border rounded outline-none focus:ring-2 focus:ring-brand-sky"
+                          />
+                          <input 
+                            type="email" placeholder="Email" required
+                            value={editUserData.email} onChange={e => setEditUserData({...editUserData, email: e.target.value})}
+                            className="p-2 border rounded outline-none focus:ring-2 focus:ring-brand-sky"
+                          />
+                          <input 
+                            type="tel" placeholder="Phone"
+                            value={editUserData.phone} onChange={e => setEditUserData({...editUserData, phone: e.target.value})}
+                            className="p-2 border rounded outline-none focus:ring-2 focus:ring-brand-sky"
+                          />
+                          <input 
+                            type="text" placeholder="Alias (Optional)"
+                            value={editUserData.alias} onChange={e => setEditUserData({...editUserData, alias: e.target.value})}
+                            className="p-2 border rounded outline-none focus:ring-2 focus:ring-brand-sky"
+                          />
+                          <input 
+                            type="text" placeholder="Relation to Mercy" required
+                            value={editUserData.position} onChange={e => setEditUserData({...editUserData, position: e.target.value})}
+                            className="p-2 border rounded outline-none focus:ring-2 focus:ring-brand-sky"
+                          />
+                        </div>
+                        <div className="flex justify-end gap-2 mt-2">
+                          <button 
+                            type="button" onClick={() => setEditingUserId(null)}
+                            className="px-4 py-2 text-slate-500 font-bold hover:bg-slate-100 rounded-lg whitespace-nowrap"
+                          >
+                            Cancel
+                          </button>
+                          <button 
+                            type="submit" disabled={isSubmittingUser}
+                            className="px-4 py-2 bg-brand-sky text-white font-bold rounded-lg hover:bg-sky-500 disabled:opacity-50 whitespace-nowrap"
+                          >
+                            {isSubmittingUser ? 'Saving...' : 'Save'}
+                          </button>
+                        </div>
+                      </form>
+                    ) : (
+                      <div className="flex flex-col md:grid md:grid-cols-4 gap-4 md:items-center">
+                        <div className="flex items-center gap-3 font-medium">
+                          <div className="w-10 h-10 md:w-8 md:h-8 rounded-full overflow-hidden bg-slate-200 flex-shrink-0">
+                            {u.profileImage ? (
+                              <img src={u.profileImage} alt={u.firstName} className="w-full h-full object-cover" />
                             ) : (
-                              <span className="text-slate-400 text-xs uppercase font-bold">Admin</span>
+                              <span className="w-full h-full flex items-center justify-center text-slate-500 font-bold text-xs md:text-[10px]">{u.firstName[0]}</span>
                             )}
-                          </td>
-                        </>
-                      )}
-                    </tr>
-                  ))}
-                  {allUsers?.length === 0 && (
-                    <tr>
-                      <td colSpan={4} className="p-8 text-center text-slate-500 italic">No users found.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-slate-800 truncate">{u.firstName} {u.lastName} {u.alias && <span className="text-slate-400 text-sm font-normal">({u.alias})</span>}</div>
+                            {/* Mobile-only fields to prevent horizontal scrolling and provide nice UX */}
+                            <div className="text-slate-500 text-sm md:hidden truncate">{u.email}</div>
+                            <div className="text-slate-400 text-xs md:hidden truncate mt-0.5">{u.position}</div>
+                          </div>
+                        </div>
+                        <div className="text-slate-600 hidden md:block truncate pr-2">{u.email}</div>
+                        <div className="text-slate-600 hidden md:block truncate pr-2">{u.position}</div>
+                        <div className="flex justify-end items-center mt-2 md:mt-0 pt-3 md:pt-0 border-t border-slate-100 md:border-0">
+                          {u.email !== ADMIN_EMAIL ? (
+                            <div className="flex justify-end gap-3 w-full md:w-auto">
+                              <button 
+                                onClick={() => handleEditUserClick(u)}
+                                className="flex-1 md:flex-none text-center text-brand-sky hover:bg-sky-50 py-2 px-4 md:p-0 md:hover:bg-transparent font-bold md:font-medium text-sm border border-brand-sky/20 md:border-0 rounded-lg transition-colors"
+                              >
+                                Edit
+                              </button>
+                              <button 
+                                onClick={() => handleDeleteUserClick(u.id, u.firstName)}
+                                className="flex-1 md:flex-none text-center text-red-500 hover:bg-red-50 py-2 px-4 md:p-0 md:hover:bg-transparent font-bold md:font-medium text-sm border border-red-200 md:border-0 rounded-lg transition-colors"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-slate-400 text-xs uppercase font-bold w-full md:w-auto text-right md:text-right">Admin</span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {allUsers?.length === 0 && (
+                  <div className="p-8 text-center text-slate-500 italic">No users found.</div>
+                )}
+              </div>
             </div>
           </div>
           
