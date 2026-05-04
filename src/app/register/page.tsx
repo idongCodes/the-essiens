@@ -1,10 +1,19 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { registerUser, checkSecret } from './actions'
-import { Suspense } from 'react'
+
+const STEPS = [
+  { id: 'firstName', title: "Let's start with your first name", placeholder: 'Jane', type: 'text', errorText: "First name is required" },
+  { id: 'lastName', title: "And your last name?", placeholder: 'Doe', type: 'text', errorText: "Last name is required" },
+  { id: 'alias', title: "Got a nickname? (Optional)", placeholder: 'What should we call you?', type: 'text', errorText: "" },
+  { id: 'phone', title: "What's a good phone number?", placeholder: '555-0123', type: 'tel', errorText: "Enter a valid phone number (min 10 digits)" },
+  { id: 'email', title: "Your email address?", placeholder: 'jane@example.com', type: 'email', errorText: "Enter a valid email address" },
+  { id: 'securityAnswer', title: "🔒 Security Check", placeholder: 'Type the answer...', type: 'text', errorText: "Incorrect answer. Please try again.", description: "\"What is Charlie's Grandma's name on her Father's side?\"" },
+  { id: 'position', title: "✅ Correct! One last thing...", placeholder: "e.g. Mercy's 3rd born son", type: 'text', errorText: "This field is required", description: "What is your relation to Mercy?" }
+];
 
 function RegisterContent() {
   const [error, setError] = useState('')
@@ -13,7 +22,9 @@ function RegisterContent() {
   const searchParams = useSearchParams()
   const secretParam = searchParams.get('familySecret')
 
-  // Form State
+  const [currentStep, setCurrentStep] = useState(0)
+  const [direction, setDirection] = useState(1)
+
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -24,17 +35,24 @@ function RegisterContent() {
     position: ''
   })
 
-  // Validation State (null = untouched, true = valid, false = invalid)
-  const [validation, setValidation] = useState<{ [key: string]: boolean | null }>({
+  const [validation, setValidation] = useState<{ [key: string]: boolean | null }>({ 
     firstName: null,
     lastName: null,
     phone: null,
     email: null,
-    securityAnswer: null, // Async validated
+    securityAnswer: secretParam ? null : null, 
     position: null
   })
 
   const [isCheckingSecret, setIsCheckingSecret] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  // Auto-focus input on step change
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus()
+    }
+  }, [currentStep])
 
   // --- ASYNC SECRET VALIDATION ---
   useEffect(() => {
@@ -45,7 +63,6 @@ function RegisterContent() {
     }
 
     setIsCheckingSecret(true)
-    // Debounce slightly to avoid spamming while typing
     const timer = setTimeout(async () => {
       try {
         const isValid = await checkSecret(answer)
@@ -60,12 +77,10 @@ function RegisterContent() {
     return () => clearTimeout(timer)
   }, [formData.securityAnswer])
 
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
     
-    // Reset validation state on change to remove immediate red error while typing
     if (validation[name] === false) {
       setValidation(prev => ({ ...prev, [name]: null }))
     }
@@ -80,15 +95,17 @@ function RegisterContent() {
       case 'position':
         isValid = value.trim().length > 0
         break
+      case 'alias':
+        isValid = true
+        break
       case 'email':
-        isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+        isValid = /^[^S@]+@[^S@]+\.[^S@]+$/.test(value)
         break
       case 'phone':
-        isValid = /^\+?[\d\s-]{10,}$/.test(value) // At least 10 digits/chars
+        isValid = /^\+?[\d\s-]{10,}$/.test(value)
         break
       case 'securityAnswer':
-        // Handled by useEffect, but we can check empty here
-        isValid = value.trim().length > 0 && validation.securityAnswer === true
+        isValid = validation.securityAnswer === true
         break
       default:
         break
@@ -100,40 +117,47 @@ function RegisterContent() {
     return isValid
   }
 
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    if (name === 'alias') return // Optional
-    if (name === 'securityAnswer') return // Handled by effect
-    validateField(name, value)
+  const isNextDisabled = () => {
+    const step = STEPS[currentStep]
+    if (step.id === 'securityAnswer') {
+      return isCheckingSecret || validation.securityAnswer !== true
+    }
+    return false
   }
 
-  const isSecurityCorrect = validation.securityAnswer === true
+  const handleNext = () => {
+    const step = STEPS[currentStep]
+    const val = formData[step.id as keyof typeof formData]
+    const isValid = validateField(step.id, val)
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
+    if (isValid && !isNextDisabled()) {
+      if (currentStep < STEPS.length - 1) {
+        setDirection(1)
+        setCurrentStep(p => p + 1)
+      } else {
+        handleSubmit()
+      }
+    }
+  }
+
+  const handlePrev = () => {
+    if (currentStep > 0) {
+      setDirection(-1)
+      setCurrentStep(p => p - 1)
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      handleNext()
+    }
+  }
+
+  async function handleSubmit() {
     setError('')
-
-    // Final Validation Check
-    const fieldsToValidate = ['firstName', 'lastName', 'phone', 'email']
-    if (isSecurityCorrect) fieldsToValidate.push('position')
-
-    let allValid = true
-    fieldsToValidate.forEach(field => {
-       const isValid = validateField(field, (formData as any)[field])
-       if (!isValid) allValid = false
-    })
-
-    if (!isSecurityCorrect) {
-        setValidation(prev => ({ ...prev, securityAnswer: false }))
-        allValid = false
-    }
-
-    if (!allValid) {
-      setError("Please fix the errors in the form.")
-      return
-    }
-
     setIsSubmitting(true)
+    
     const submitData = new FormData()
     Object.entries(formData).forEach(([key, value]) => submitData.append(key, value))
 
@@ -147,182 +171,127 @@ function RegisterContent() {
     }
   }
 
-  // Helper to get input classes based on validation state
-  const getInputClass = (fieldName: string) => {
-    const base = "w-full p-3 rounded-lg border focus:ring-2 outline-none transition-all "
-    if (validation[fieldName] === true) return base + "bg-green-50 border-green-400 text-green-800 focus:ring-green-200"
-    if (validation[fieldName] === false) return base + "bg-red-50 border-red-400 text-red-800 focus:ring-red-200"
-    return base + "bg-slate-50 border-slate-200 focus:ring-brand-sky"
-  }
-
-  const ValidationIcon = ({ fieldName }: { fieldName: string }) => {
-    if (validation[fieldName] === true) return <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-500">✓</span>
-    if (validation[fieldName] === false) return <span className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500 font-bold">!</span>
-    return null
-  }
+  const step = STEPS[currentStep]
 
   return (
-    <div className="bg-white p-8 rounded-2xl shadow-lg max-w-lg w-full border border-slate-100">
+    <div className="bg-white p-8 md:p-12 rounded-3xl shadow-2xl max-w-lg w-full border border-slate-100 flex flex-col min-h-[450px] relative overflow-hidden">
         
-        <h1 className="text-3xl font-bold text-center text-brand-sky mb-2 tracking-tight">Join the Family</h1>
-        <p className="text-center text-slate-400 mb-8">Create your profile to enter the Common Room.</p>
+        {/* Header */}
+        <div className="flex justify-between items-center mb-8">
+            <h1 className="text-xl font-bold text-slate-300 tracking-tight">The Essiens</h1>
+            <span className="text-sm font-medium text-slate-400 bg-slate-100 px-3 py-1 rounded-full">
+                {currentStep + 1} of {STEPS.length}
+            </span>
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          
-          {/* PERSONAL DETAILS */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="relative">
-              <label className="block text-xs font-bold text-slate-500 mb-1">FIRST NAME</label>
-              <input 
-                name="firstName" 
-                value={formData.firstName}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                className={getInputClass('firstName')}
-                placeholder="Jane"
-              />
-              <ValidationIcon fieldName="firstName" />
-              {validation.firstName === false && <p className="text-red-500 text-[10px] mt-1">First name is required</p>}
-            </div>
-            <div className="relative">
-              <label className="block text-xs font-bold text-slate-500 mb-1">LAST NAME</label>
-              <input 
-                name="lastName" 
-                value={formData.lastName}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                className={getInputClass('lastName')}
-                placeholder="Doe"
-              />
-              <ValidationIcon fieldName="lastName" />
-              {validation.lastName === false && <p className="text-red-500 text-[10px] mt-1">Last name is required</p>}
-            </div>
-          </div>
+        {/* Form Container */}
+        <div className="flex-1 flex flex-col justify-center relative">
+            <div 
+                key={currentStep} 
+                className={`animate-in fade-in duration-300 ${direction > 0 ? 'slide-in-from-right-8' : 'slide-in-from-left-8'}`}
+            >
+                <h2 className="text-3xl font-bold text-brand-sky mb-2 leading-tight">{step.title}</h2>
+                {step.description && <p className="text-slate-500 mb-6 text-lg">{step.description}</p>}
 
-          <div>
-            <label className="block text-xs font-bold text-slate-500 mb-1">PREFERRED ALIAS (Optional)</label>
-            <input 
-              name="alias" 
-              value={formData.alias}
-              onChange={handleChange}
-              placeholder="What should we call you?" 
-              className="w-full p-3 rounded-lg bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-brand-sky outline-none" 
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="relative">
-              <label className="block text-xs font-bold text-slate-500 mb-1">PHONE</label>
-              <input 
-                name="phone" 
-                type="tel" 
-                value={formData.phone}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                className={getInputClass('phone')}
-                placeholder="555-0123"
-              />
-              <ValidationIcon fieldName="phone" />
-              {validation.phone === false && <p className="text-red-500 text-[10px] mt-1">Enter a valid phone number (min 10 digits)</p>}
-            </div>
-            <div className="relative">
-              <label className="block text-xs font-bold text-slate-500 mb-1">EMAIL</label>
-              <input 
-                name="email" 
-                type="email" 
-                value={formData.email}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                className={getInputClass('email')}
-                placeholder="jane@example.com"
-              />
-              <ValidationIcon fieldName="email" />
-              {validation.email === false && <p className="text-red-500 text-[10px] mt-1">Enter a valid email address</p>}
-            </div>
-          </div>
-
-          {/* SECURITY QUESTION */}
-          <div className={`p-4 rounded-xl border transition-all duration-500 relative ${isSecurityCorrect ? 'bg-green-50 border-green-200' : 'bg-brand-yellow/20 border-brand-yellow'}`}>
-            <label className="block text-sm font-bold text-slate-700 mb-2 flex justify-between">
-              <span>🔒 Security Question</span>
-              {isCheckingSecret && <span className="text-brand-sky text-xs bg-sky-100 px-2 py-0.5 rounded-full animate-pulse">Checking...</span>}
-              {isSecurityCorrect && !isCheckingSecret && <span className="text-green-600 text-xs bg-green-100 px-2 py-0.5 rounded-full">Verified</span>}
-            </label>
-            <p className="text-sm text-slate-600 mb-3 italic">
-              "What is Charlie's Grandma's name on her Father's side?"
-            </p>
-            <div className="relative">
-              <input 
-                name="securityAnswer" 
-                value={formData.securityAnswer}
-                onChange={handleChange}
-                placeholder="Type the answer..."
-                className={`w-full p-3 rounded-lg border outline-none pr-10 ${
-                   validation.securityAnswer === false 
-                   ? 'border-red-400 bg-white focus:ring-2 focus:ring-red-200' 
-                   : 'border-slate-300 focus:ring-2 focus:ring-brand-pink'
-                }`}
-              />
-               {validation.securityAnswer === false && <span className="absolute right-3 top-1/2 -translate-y-1/2 text-red-500 font-bold">!</span>}
-            </div>
-            {validation.securityAnswer === false && !isCheckingSecret && (
-              <p className="text-red-500 text-xs mt-2 font-medium">Incorrect answer. Please try again.</p>
-            )}
-          </div>
-
-          {/* HIDDEN "POSITION" FIELD - APPEARS ON SUCCESS */}
-          {isSecurityCorrect && (
-            <div className="animate-in slide-in-from-top-4 fade-in duration-500">
-              <div className="bg-brand-sky/5 p-5 rounded-xl border border-brand-sky/30 mt-2">
-                <label className="block text-sm font-bold text-brand-sky mb-2">
-                  ✅ Correct! One last thing...
-                </label>
-                <div className="relative">
-                  <p className="text-xs text-slate-500 mb-2 font-medium uppercase">What is your relation to Mercy?</p>
-                  <input 
-                    name="position" 
-                    value={formData.position}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    placeholder="e.g. Mercy's 3rd born son"
-                    className={getInputClass('position')} 
-                  />
-                  <ValidationIcon fieldName="position" />
-                  {validation.position === false && <p className="text-red-500 text-[10px] mt-1">This field is required</p>}
+                <div className="relative mt-4">
+                    <input 
+                        ref={inputRef}
+                        type={step.type}
+                        name={step.id}
+                        value={formData[step.id as keyof typeof formData]}
+                        onChange={handleChange}
+                        onKeyDown={handleKeyDown}
+                        placeholder={step.placeholder}
+                        className="w-full bg-transparent border-b-2 border-slate-200 focus:border-brand-sky text-2xl md:text-3xl py-3 outline-none transition-colors placeholder:text-slate-300 text-slate-800"
+                        autoFocus
+                    />
                 </div>
-              </div>
-              
-              <button 
-                type="submit" 
-                disabled={isSubmitting}
-                className="w-full bg-brand-sky text-white font-bold py-4 rounded-xl shadow-md hover:bg-sky-500 transition-all mt-6 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
-              >
-                {isSubmitting ? (
-                  <>
-                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Creating Profile...
-                  </>
-                ) : (
-                  'Complete Registration'
-                )}
-              </button>
-            </div>
-          )}
 
-          {error && (
-            <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded mt-4 animate-in shake">
+                {/* Validation and Feedback */}
+                <div className="h-8 mt-4">
+                    {validation[step.id] === false && step.id !== 'securityAnswer' && (
+                        <p className="text-red-500 text-sm font-medium animate-in slide-in-from-top-2">{step.errorText}</p>
+                    )}
+
+                    {step.id === 'securityAnswer' && (
+                        <>
+                            {isCheckingSecret && <span className="text-brand-sky text-sm font-medium animate-pulse">Verifying family secret...</span>}
+                            {validation.securityAnswer === true && !isCheckingSecret && (
+                                <span className="text-green-600 text-sm font-medium flex items-center gap-1 animate-in zoom-in">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                                    Verified
+                                </span>
+                            )}
+                            {validation.securityAnswer === false && !isCheckingSecret && formData.securityAnswer.length > 0 && (
+                                <span className="text-red-500 text-sm font-medium animate-in slide-in-from-top-2">{step.errorText}</span>
+                            )}
+                        </>
+                    )}
+                </div>
+            </div>
+        </div>
+
+        {/* Global Error */}
+        {error && (
+            <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded mt-4 animate-in shake absolute top-4 left-4 right-4 z-10">
               <p className="text-red-700 text-sm font-medium">{error}</p>
             </div>
-          )}
+        )}
 
-        </form>
+        {/* Navigation Controls */}
+        <div className="flex justify-between items-center mt-8 pt-6 border-t border-slate-100">
+            <button 
+                onClick={handlePrev} 
+                disabled={currentStep === 0} 
+                className={`p-3 rounded-full ${currentStep === 0 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-500 hover:bg-slate-100'} transition-all`}
+                aria-label="Previous step"
+            >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+            </button>
 
-        <div className="mt-8 text-center pt-6 border-t border-slate-100">
-          <Link href="/login" className="text-sm text-brand-pink font-bold hover:text-pink-400 transition-colors">
-            Already have an account? Login here
+            {/* Progress Dots */}
+            <div className="flex gap-2">
+                {STEPS.map((_, i) => (
+                <div key={i} className={`h-2 rounded-full transition-all duration-300 ${i === currentStep ? 'w-6 bg-brand-sky' : 'w-2 bg-slate-200'}`} />
+                ))}
+            </div>
+
+            <button 
+                onClick={handleNext}
+                disabled={isNextDisabled() || isSubmitting}
+                className={`px-6 py-3 rounded-full font-bold shadow-md transition-all flex items-center gap-2 ${ 
+                    isNextDisabled() || isSubmitting 
+                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed' 
+                    : 'bg-brand-sky text-white hover:bg-sky-500 hover:scale-105'
+                }`}
+            >
+                {currentStep === STEPS.length - 1 ? (
+                    isSubmitting ? (
+                        <>
+                            <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Wait...
+                        </>
+                    ) : 'Finish'
+                ) : (
+                    <>
+                        Next
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                    </>
+                )}
+            </button>
+        </div>
+
+        {/* Footer Link */}
+        <div className="mt-6 text-center">
+          <Link href="/login" className="text-sm text-slate-400 hover:text-brand-pink transition-colors">
+            Already have an account? Login
           </Link>
         </div>
       </div>
@@ -331,8 +300,8 @@ function RegisterContent() {
 
 export default function RegisterPage() {
   return (
-    <main className="min-h-screen flex items-center justify-center bg-brand-cream/30 px-4 py-10 font-sans">
-      <Suspense fallback={<div className="text-brand-sky font-bold">Loading...</div>}>
+    <main className="min-h-screen flex items-center justify-center bg-brand-cream px-4 py-10 font-sans">
+      <Suspense fallback={<div className="text-brand-sky font-bold animate-pulse">Loading...</div>}>
         <RegisterContent />
       </Suspense>
     </main>

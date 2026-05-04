@@ -78,7 +78,7 @@ export default function FeedbackWidget() {
             {/* Form */}
             <div className="flex flex-col gap-4">
               <p className="text-slate-500 text-sm">
-                Found a bug? Have an idea? Let us know how we can make LoveMyFam better for you.
+                Found a bug? Have an idea? Let us know how we can make The Essiens better for you.
               </p>
               
               <textarea 

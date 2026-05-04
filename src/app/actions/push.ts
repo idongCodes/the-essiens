@@ -70,7 +70,7 @@ export async function sendNotification(userIds: string[], message: string, url: 
         }
         
         const payload = JSON.stringify({
-          title: 'Love My Fam',
+          title: 'The Essiens',
           body: message,
           url: url
         })

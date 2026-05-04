@@ -28,7 +28,7 @@ export default function Home() {
           
           {/* Main Headline */}
           <h1 className="text-5xl md:text-7xl font-bold mb-6 tracking-tight drop-shadow-md">
-            LoveMyFam
+            The Essiens
           </h1>
           
           {/* Tagline */}
@@ -64,7 +64,7 @@ export default function Home() {
           <h2 className="text-3xl font-bold mb-8 text-brand-sky">The Mission</h2>
           <p className="text-lg text-slate-600 leading-relaxed mb-8">
             In the age of endless notifications and cluttered group chats, staying genuinely connected feels like a chore.
-            <strong className="text-brand-pink"> LoveMyFam</strong> is designed to eliminate friction. 
+            <strong className="text-brand-pink"> The Essiens</strong> is designed to eliminate friction. 
             No more long, unplanned phone calls or searching through hundreds of text messages for one update.
           </p>
         </div>
