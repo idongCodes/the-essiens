@@ -15,7 +15,8 @@ export default function PostInput() {
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false)
   
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const cameraInputRef = useRef<HTMLInputElement>(null)
+  const cameraPhotoRef = useRef<HTMLInputElement>(null)
+  const cameraVideoRef = useRef<HTMLInputElement>(null)
   const toast = useToast()
 
   const checkVideoDuration = (file: File): Promise<boolean> => {
@@ -50,7 +51,8 @@ export default function PostInput() {
         if (!isValidDuration) {
           toast.warning("Video must be 59 seconds or less.")
           if (fileInputRef.current) fileInputRef.current.value = ''
-          if (cameraInputRef.current) cameraInputRef.current.value = ''
+          if (cameraPhotoRef.current) cameraPhotoRef.current.value = ''
+          if (cameraVideoRef.current) cameraVideoRef.current.value = ''
           return
         }
         setMediaType('video')
@@ -135,7 +137,8 @@ export default function PostInput() {
       setMediaType(null)
       setPreviewUrl(null)
       if (fileInputRef.current) fileInputRef.current.value = ''
-      if (cameraInputRef.current) cameraInputRef.current.value = ''
+      if (cameraPhotoRef.current) cameraPhotoRef.current.value = ''
+      if (cameraVideoRef.current) cameraVideoRef.current.value = ''
     } else {
       toast.error(result.message || "Failed to create post.")
     }
@@ -146,7 +149,8 @@ export default function PostInput() {
     setMediaType(null)
     setPreviewUrl(null)
     if (fileInputRef.current) fileInputRef.current.value = ''
-    if (cameraInputRef.current) cameraInputRef.current.value = ''
+    if (cameraPhotoRef.current) cameraPhotoRef.current.value = ''
+    if (cameraVideoRef.current) cameraVideoRef.current.value = ''
   }
 
   return (
@@ -220,9 +224,17 @@ export default function PostInput() {
         />
         <input 
           type="file" 
-          ref={cameraInputRef} 
+          ref={cameraPhotoRef} 
           className="hidden" 
-          accept="image/*,video/*"
+          accept="image/*"
+          capture="environment"
+          onChange={handleFileChange}
+        />
+        <input 
+          type="file" 
+          ref={cameraVideoRef} 
+          className="hidden" 
+          accept="video/*"
           capture="environment"
           onChange={handleFileChange}
         />
@@ -266,7 +278,7 @@ export default function PostInput() {
               </button>
               
               <button 
-                onClick={() => { setIsMediaModalOpen(false); cameraInputRef.current?.click(); }}
+                onClick={() => { setIsMediaModalOpen(false); cameraPhotoRef.current?.click(); }}
                 className="w-full flex items-center gap-4 p-4 hover:bg-slate-50 rounded-xl transition-all text-left border border-slate-100 shadow-sm hover:shadow active:scale-[0.98]"
               >
                 <div className="bg-brand-pink/10 p-3 rounded-full text-brand-pink">
@@ -276,8 +288,23 @@ export default function PostInput() {
                   </svg>
                 </div>
                 <div>
-                  <div className="font-bold text-slate-700">Take a Photo / Video</div>
-                  <div className="text-xs text-slate-500">Use your camera right now</div>
+                  <div className="font-bold text-slate-700">Take a Photo</div>
+                  <div className="text-xs text-slate-500">Use your camera for a picture</div>
+                </div>
+              </button>
+
+              <button 
+                onClick={() => { setIsMediaModalOpen(false); cameraVideoRef.current?.click(); }}
+                className="w-full flex items-center gap-4 p-4 hover:bg-slate-50 rounded-xl transition-all text-left border border-slate-100 shadow-sm hover:shadow active:scale-[0.98]"
+              >
+                <div className="bg-purple-500/10 p-3 rounded-full text-purple-500">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="font-bold text-slate-700">Record a Video</div>
+                  <div className="text-xs text-slate-500">Use your camera to record</div>
                 </div>
               </button>
             </div>
