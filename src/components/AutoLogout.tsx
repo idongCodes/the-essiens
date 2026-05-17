@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react'
 import { logout } from '@/app/actions' // Ensure this path is correct for your project!
 
-const TIMEOUT_MS = 15 * 60 * 1000 // 15 Minutes
+const TIMEOUT_MS = 7 * 24 * 60 * 60 * 1000 // 7 Days
 
 export default function AutoLogout() {
   // Use a ref to store the timestamp without triggering re-renders
