@@ -1,13 +1,13 @@
 'use client'
 
-import EmojiButton from './EmojiButton'
+import EmojiButton from '@/components/EmojiButton'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { XMarkIcon, ArrowUturnLeftIcon } from '@heroicons/react/24/outline'
+import { ArrowUturnLeftIcon } from '@heroicons/react/24/outline'
 import { getChatMessages, sendChatMessage, toggleReaction } from '@/app/chat/actions'
 import { pusherClient } from '@/lib/pusherClient'
 
-export default function ChatModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+export default function ChatPage() {
   const router = useRouter()
   const [joinMessage, setJoinMessage] = useState<string | null>(null)
   const [messages, setMessages] = useState<any[]>([])
@@ -32,19 +32,17 @@ export default function ChatModal({ isOpen, onClose }: { isOpen: boolean; onClos
   // Available reactions
   const REACTION_EMOJIS = ['❤️', '👍', '😂', '😮', '😢']
 
-  const fetchCurrentUser = async () => {
-    if (currentUserId) {
-      try {
-        const response = await fetch(`/api/user/${currentUserId}`)
-        if (response.ok) {
-          const userData = await response.json()
-          setCurrentUser(userData)
-        }
-      } catch (error) {
-        console.error('Error fetching user data:', error)
+  const fetchCurrentUser = useCallback(async (userId: string) => {
+    try {
+      const response = await fetch(`/api/user/${userId}`)
+      if (response.ok) {
+        const userData = await response.json()
+        setCurrentUser(userData)
       }
+    } catch (error) {
+      console.error('Error fetching user data:', error)
     }
-  }
+  }, [])
 
   const fetchInitialMessages = async () => {
     const result = await getChatMessages()
@@ -81,7 +79,6 @@ export default function ChatModal({ isOpen, onClose }: { isOpen: boolean; onClos
 
   // Intersection Observer for Infinite Scroll
   useEffect(() => {
-    if (!isOpen) return
     const observer = new IntersectionObserver((entries) => {
       if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
         loadMoreMessages()
@@ -93,50 +90,50 @@ export default function ChatModal({ isOpen, onClose }: { isOpen: boolean; onClos
     }
     
     return () => observer.disconnect()
-  }, [loadMoreMessages, hasMore, isLoadingMore, isOpen])
+  }, [loadMoreMessages, hasMore, isLoadingMore])
 
   useEffect(() => {
-    if (isOpen) {
-      const message = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('new_user_join_message='))
-        ?.split('=')[1]
-      
-      if (message) {
-        setTimeout(() => setJoinMessage(decodeURIComponent(message)), 0)
-        document.cookie = 'new_user_join_message=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
-      }
-      
-      if (!message) {
-        setJoinMessage("Idong has joined the app! 🎉")
-      }
-
-      fetchInitialMessages()
-      
-      const getSessionId = () => {
-        const cookies = document.cookie.split('; ')
-        const possibleNames = ['user_session', 'session_id', 'sessionId', 'session', 'auth_token']
-        
-        for (const name of possibleNames) {
-          const cookie = cookies.find(row => row.startsWith(`${name}=`))
-          if (cookie) {
-            return cookie.split('=')[1]
-          }
-        }
-        return null
-      }
-      
-      const sessionId = getSessionId()
-      const userId = sessionId || 'test-user-id'
-      setCurrentUserId(userId)
-      
-      fetchCurrentUser()
+    const message = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('new_user_join_message='))
+      ?.split('=')[1]
+    
+    if (message) {
+      setTimeout(() => setJoinMessage(decodeURIComponent(message)), 0)
+      document.cookie = 'new_user_join_message=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
     }
-  }, [isOpen])
+    
+    if (!message) {
+      setJoinMessage("Idong has joined the app! 🎉")
+    }
+
+    fetchInitialMessages()
+    
+    const getSessionId = () => {
+      const cookies = document.cookie.split('; ')
+      const possibleNames = ['user_session', 'session_id', 'sessionId', 'session', 'auth_token']
+      
+      for (const name of possibleNames) {
+        const cookie = cookies.find(row => row.startsWith(`${name}=`))
+        if (cookie) {
+          return cookie.split('=')[1]
+        }
+      }
+      return null
+    }
+    
+    const sessionId = getSessionId()
+    const userId = sessionId || 'test-user-id'
+    setCurrentUserId(userId)
+    
+    if (userId) {
+      fetchCurrentUser(userId)
+    }
+  }, [fetchCurrentUser])
 
   // Pusher Subscription
   useEffect(() => {
-    if (!isOpen || !currentUserId) return
+    if (!currentUserId) return
 
     const channel = pusherClient.subscribe('presence-chat')
     channelRef.current = channel
@@ -201,7 +198,7 @@ export default function ChatModal({ isOpen, onClose }: { isOpen: boolean; onClos
     return () => {
       pusherClient.unsubscribe('presence-chat')
     }
-  }, [isOpen, currentUserId])
+  }, [currentUserId])
 
   // Close reaction picker when clicking outside
   useEffect(() => {
@@ -323,8 +320,6 @@ export default function ChatModal({ isOpen, onClose }: { isOpen: boolean; onClos
       handleSendMessage()
     }
   }
-  
-  if (!isOpen) return null
 
   const formatDate = (date: Date) => {
     const d = new Date(date)
@@ -383,7 +378,6 @@ export default function ChatModal({ isOpen, onClose }: { isOpen: boolean; onClos
   }
 
   const handleUserClick = (author: any) => {
-    onClose()
     const displayName = author.alias || author.firstName
     if(displayName){
         const user = displayName.toLowerCase().replace(/\s+/g, '-').trim()
@@ -394,8 +388,8 @@ export default function ChatModal({ isOpen, onClose }: { isOpen: boolean; onClos
   const renderSystemMessage = (message: string, time: Date) => {
     return (
       <div className="flex justify-center my-4">
-        <div className="bg-slate-100 px-3 py-1 rounded-full">
-          <p className="text-xs text-slate-500 font-medium">{message}</p>
+        <div className="bg-slate-200 px-3 py-1 rounded-full">
+          <p className="text-xs text-slate-600 font-medium">{message}</p>
           <p className="text-[10px] text-slate-400 text-center mt-1">{formatTime(time)}</p>
         </div>
       </div>
@@ -413,18 +407,10 @@ export default function ChatModal({ isOpen, onClose }: { isOpen: boolean; onClos
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex">
-      {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-white/30 backdrop-blur-md border border-white/40"
-        onClick={onClose}
-      />
-      
-      {/* Modal Container */}
-      <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 w-[90vw] max-w-6xl h-[80vh] bg-white rounded-t-3xl shadow-2xl border border-slate-200 flex flex-col animate-in slide-in-from-bottom-4 duration-300">
-        
+    <div className="flex flex-col min-h-screen pt-14 bg-slate-50">
+      <div className="flex-1 flex flex-col max-w-5xl mx-auto w-full bg-white shadow-xl sm:border-x border-slate-200 h-[calc(100vh-3.5rem)]">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-gradient-to-r from-brand-sky to-brand-pink text-white rounded-t-3xl">
+        <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-gradient-to-r from-brand-sky to-brand-pink text-white shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
             <h2 className="text-lg font-bold">Family Chat</h2>
@@ -432,16 +418,10 @@ export default function ChatModal({ isOpen, onClose }: { isOpen: boolean; onClos
               {onlineUsers.length} Online
             </span>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-white/20 rounded-full transition-colors"
-          >
-            <XMarkIcon className="w-5 h-5" />
-          </button>
         </div>
         
         {/* Chat Messages Area */}
-        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50">
+        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/50">
           
           <div ref={topRef} className="h-4 w-full" />
           {isLoadingMore && <div className="text-center text-xs text-slate-400">Loading older messages...</div>}
@@ -451,7 +431,7 @@ export default function ChatModal({ isOpen, onClose }: { isOpen: boolean; onClos
             <div className="text-center py-8">
               <div className="text-6xl mb-4">💬</div>
               <h3 className="text-xl font-bold text-slate-800 mb-2">Welcome to Family Chat</h3>
-              <p className="text-slate-600 max-w-md mx-auto">
+              <p className="text-slate-600 max-w-md mx-auto text-sm">
                 Start conversations with your family members. This is a safe space for family discussions.
               </p>
               <p className="text-xs text-slate-400 mt-2">{formatDate(now)} • {formatTime(now)}</p>
@@ -459,9 +439,9 @@ export default function ChatModal({ isOpen, onClose }: { isOpen: boolean; onClos
           )}
           
           <div className="flex items-center gap-4 my-4">
-            <div className="flex-1 h-px bg-slate-300"></div>
-            <span className="text-xs text-slate-500 font-medium">{formatDate(sampleDate1)}</span>
-            <div className="flex-1 h-px bg-slate-300"></div>
+            <div className="flex-1 h-px bg-slate-200"></div>
+            <span className="text-xs text-slate-400 font-medium">{formatDate(sampleDate1)}</span>
+            <div className="flex-1 h-px bg-slate-200"></div>
           </div>
           
           {/* Messages */}
@@ -481,24 +461,24 @@ export default function ChatModal({ isOpen, onClose }: { isOpen: boolean; onClos
                     
                     {/* Reply Context (Faded, behind) */}
                     {message.replyTo && (
-                       <div className={`text-xs text-slate-400 mb-1 px-2 border-l-2 border-slate-300 bg-slate-50/50 p-1 rounded opacity-70 ${isCurrentUser ? 'text-right' : 'text-left'}`}>
+                       <div className={`text-xs text-slate-400 mb-1 px-2 border-l-2 border-slate-300 bg-slate-100 p-1 rounded opacity-70 ${isCurrentUser ? 'text-right' : 'text-left'}`}>
                          <span className="font-bold">Replying to {message.replyTo.author.alias || message.replyTo.author.firstName}:</span> {message.replyTo.content.substring(0, 30)}{message.replyTo.content.length > 30 ? '...' : ''}
                        </div>
                     )}
 
                     {/* Message Bubble */}
                     <div 
-                      className={`relative p-3 rounded-2xl shadow-sm cursor-pointer transition-all active:scale-95 ${isCurrentUser ? 'bg-brand-sky text-white' : 'bg-white text-slate-700'}`}
+                      className={`relative p-3 rounded-2xl shadow-sm cursor-pointer transition-all active:scale-95 ${isCurrentUser ? 'bg-brand-sky text-white rounded-br-sm' : 'bg-white text-slate-700 border border-slate-100 rounded-bl-sm'}`}
                       onClick={(e) => {
                         e.stopPropagation()
                         setSelectedMessageId(showReactionPicker ? null : message.id)
                       }}
                     >
-                      <p className="text-sm">{message.content}</p>
+                      <p className="text-sm break-words whitespace-pre-wrap">{message.content}</p>
                       
                       {/* Reaction Picker Popover */}
                       {showReactionPicker && (
-                        <div className={`absolute bottom-full mb-2 z-10 bg-white shadow-xl rounded-2xl p-2 flex flex-col gap-2 border border-slate-100 animate-in zoom-in-95 duration-200 ${isCurrentUser ? 'right-0' : 'left-0'}`}>
+                        <div className={`absolute bottom-full mb-2 z-10 bg-white shadow-xl rounded-2xl p-2 flex flex-col gap-2 border border-slate-200 animate-in zoom-in-95 duration-200 ${isCurrentUser ? 'right-0' : 'left-0'}`}>
                           {/* Reactions */}
                           <div className="flex gap-1">
                             {REACTION_EMOJIS.map(emoji => (
@@ -533,10 +513,10 @@ export default function ChatModal({ isOpen, onClose }: { isOpen: boolean; onClos
 
                     {/* Meta & Reactions */}
                     <div className="flex flex-col gap-1 mt-1">
-                      <div className={`flex items-center gap-2 px-2 ${isCurrentUser ? 'justify-end' : ''}`}>
+                      <div className={`flex items-center gap-2 px-1 ${isCurrentUser ? 'justify-end' : ''}`}>
                          <button 
                             onClick={() => handleUserClick(message.author)}
-                            className={`text-xs font-medium hover:text-brand-pink transition-colors cursor-pointer ${isCurrentUser ? 'text-brand-sky/80' : 'text-slate-400'}`}
+                            className={`text-xs font-medium hover:text-brand-pink transition-colors cursor-pointer ${isCurrentUser ? 'text-slate-400' : 'text-slate-500'}`}
                           >
                             {getDisplayName(message.author)}
                           </button>
@@ -546,8 +526,8 @@ export default function ChatModal({ isOpen, onClose }: { isOpen: boolean; onClos
                                Admin
                              </span>
                           )}
-                          <span className={`text-xs ${isCurrentUser ? 'text-brand-sky/60' : 'text-slate-300'}`}>•</span>
-                          <p className={`text-xs ${isCurrentUser ? 'text-brand-sky/80' : 'text-slate-400'}`}>{formatTime(message.createdAt)}</p>
+                          <span className={`text-xs ${isCurrentUser ? 'text-slate-300' : 'text-slate-300'}`}>•</span>
+                          <p className={`text-[10px] ${isCurrentUser ? 'text-slate-400' : 'text-slate-400'}`}>{formatTime(message.createdAt)}</p>
                       </div>
 
                       {/* Display Reactions */}
@@ -598,7 +578,7 @@ export default function ChatModal({ isOpen, onClose }: { isOpen: boolean; onClos
         </div>
         
         {/* Message Input */}
-        <div className="p-4 border-t border-slate-200 bg-white">
+        <div className="p-4 border-t border-slate-200 bg-white shrink-0">
           {/* Replying Indicator */}
           {replyingTo && (
              <div className="flex items-center justify-between bg-slate-50 p-2 rounded-lg mb-2 text-xs border-l-4 border-brand-sky">
@@ -607,7 +587,9 @@ export default function ChatModal({ isOpen, onClose }: { isOpen: boolean; onClos
                    <span className="text-slate-500 truncate max-w-xs">{replyingTo.content}</span>
                 </div>
                 <button onClick={() => setReplyingTo(null)} className="p-1 hover:bg-slate-200 rounded-full">
-                   <XMarkIcon className="w-4 h-4 text-slate-500" />
+                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-slate-500">
+                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                   </svg>
                 </button>
              </div>
           )}
@@ -629,7 +611,7 @@ export default function ChatModal({ isOpen, onClose }: { isOpen: boolean; onClos
                 />
                 
                 <div className="shrink-0">
-                  <EmojiButton onEmojiSelect={(emoji) => setInputMessage(prev => prev + emoji)} />
+                  <EmojiButton onEmojiSelect={(emoji: string) => setInputMessage((prev: string) => prev + emoji)} />
                 </div>
 
                 <button 
@@ -642,7 +624,7 @@ export default function ChatModal({ isOpen, onClose }: { isOpen: boolean; onClos
                   </svg>
                 </button>
               </div>
-              <p className="text-xs text-slate-400 mt-2 text-center">{formatDate(now)} • {formatTime(now)}</p>
+              <p className="text-[10px] text-slate-400 mt-2 text-center">{formatDate(now)} • {formatTime(now)}</p>
             </div>
           </div>
         </div>

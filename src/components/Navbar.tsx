@@ -5,7 +5,6 @@ import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { logout } from '@/app/actions'
 import { useState, useEffect } from 'react'
-import ChatModal from './ChatModal'
 import { getUnreadCount } from '@/app/notifications/actions'
 import { useAuth } from '@/context/AuthProvider'
 
@@ -13,7 +12,6 @@ export default function Navbar() {
   const { isLoggedIn } = useAuth()
   const pathname = usePathname()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [isChatOpen, setIsChatOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
 
   // Prevent scrolling when menu is open
@@ -107,17 +105,12 @@ export default function Navbar() {
       },
       {
         name: 'Chat',
-        href: '#',
+        href: '/chat',
         icon: (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
           </svg>
         ),
-        isButton: true,
-        onClick: () => {
-          setIsChatOpen(true)
-          closeMenu()
-        },
       },
     ] : []),
   ]
@@ -195,11 +188,11 @@ export default function Navbar() {
         <div className="flex-1 overflow-y-auto py-4 px-3 flex flex-col gap-2">
           {navItems.map((item) => {
             const active = isActive(item.href)
-            if (item.isButton) {
+            if ('isButton' in item && item.isButton) {
               return (
                 <button
                   key={item.name}
-                  onClick={item.onClick}
+                  onClick={'onClick' in item ? (item.onClick as any) : undefined}
                   className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-left w-full
                     ${active ? 'bg-white/20 text-white font-semibold' : 'text-white/90 hover:bg-white/10 hover:text-white'}
                   `}
@@ -255,8 +248,6 @@ export default function Navbar() {
           )}
         </div>
       </div>
-
-      <ChatModal isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
     </>
   )
 }
