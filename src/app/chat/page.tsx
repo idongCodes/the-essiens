@@ -133,7 +133,7 @@ export default function ChatPage() {
 
   // Pusher Subscription
   useEffect(() => {
-    if (!currentUserId) return
+    if (!currentUserId || !pusherClient) return
 
     const channel = pusherClient.subscribe('presence-chat')
     channelRef.current = channel
