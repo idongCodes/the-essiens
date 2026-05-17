@@ -2,9 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Navbar from "@/components/Navbar";
 import AutoLogout from "@/components/AutoLogout";
-import FeedbackSection from "@/components/FeedbackSection";
 import FeedbackWidget from "@/components/FeedbackWidget";
-import WhatsNewSection from "@/components/WhatsNewSection";
 import NotificationPrompt from "@/components/NotificationPrompt";
 import { cookies } from "next/headers";
 import { AuthProvider } from "@/context/AuthProvider";
@@ -56,13 +54,6 @@ export default async function RootLayout({
               <main className="flex-1 pt-12"> 
                 {children}
               </main>
-
-              {/* 1. Global Feedback Section (Sits above footer) */}
-              {/* We removed 'isLoggedIn' prop to fix the layout bug */}
-              <FeedbackSection />
-
-              {/* 2. What's New Section (Sits above footer) */}
-              <WhatsNewSection />
 
               {/* 3. Notification Prompt (Only if logged in) */}
               {isLoggedIn && <NotificationPrompt />}
