@@ -59,7 +59,7 @@ export default function AnnouncementCarousel({
           onMouseLeave={() => setIsPaused(false)}
         >
           {/* CONTENT */}
-          <div className="relative h-20 flex items-center">
+          <div className="relative h-28 flex items-center">
              {announcements.map((ann, i) => (
                <div 
                  key={ann.id}
@@ -74,6 +74,11 @@ export default function AnnouncementCarousel({
                  <p className="text-white/90 text-sm line-clamp-2 leading-relaxed">
                    {ann.content}
                  </p>
+                 {ann.createdAt && (
+                   <span className="text-xs text-white/70 mt-1 block">
+                     {new Date(ann.createdAt).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                   </span>
+                 )}
                </div>
              ))}
           </div>
