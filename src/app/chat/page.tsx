@@ -407,8 +407,8 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen pt-14 bg-slate-50">
-      <div className="flex-1 flex flex-col max-w-5xl mx-auto w-full bg-white shadow-xl sm:border-x border-slate-200 h-[calc(100vh-3.5rem)]">
+    <div className="fixed top-14 left-0 right-0 bottom-0 flex flex-col bg-slate-50 z-30">
+      <div className="flex-1 flex flex-col max-w-5xl mx-auto w-full bg-white shadow-xl sm:border-x border-slate-200 overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-gradient-to-r from-brand-sky to-brand-pink text-white shrink-0">
           <div className="flex items-center gap-3">
