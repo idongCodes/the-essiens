@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Navbar from "@/components/Navbar";
 import AutoLogout from "@/components/AutoLogout";
@@ -20,14 +20,42 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "The Essiens | Welcome Home!",
-  description: "A safe space for family.",
+export const viewport: Viewport = {
+  themeColor: "#ffffff",
   colorScheme: "light",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#ffffff" }
-  ],
+};
+
+export const metadata: Metadata = {
+  metadataBase: new URL("https://the-essiens.vercel.app"),
+  title: "The Essiens | A Private Family Connection Space",
+  description: "Stay genuinely connected with family through private updates, photos, and milestones. A safe, ad-free space designed for meaningful communication and long-lasting memories.",
+  keywords: ["family", "connection", "private social network", "The Essiens", "family updates", "safe space", "secure communication"],
+  openGraph: {
+    title: "The Essiens | Welcome Home!",
+    description: "A private, safe space for our family to share life's precious moments, photos, and updates without the clutter of traditional social media.",
+    url: "https://the-essiens.vercel.app", // Placeholder, using project name
+    siteName: "The Essiens",
+    images: [
+      {
+        url: "/images/mom_charlie_bg.jpg",
+        width: 1200,
+        height: 630,
+        alt: "The Essiens Family Space",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "The Essiens | Family Connection Space",
+    description: "Simplified family communication. Share life's highlights in a secure, private room.",
+    images: ["/images/mom_charlie_bg.jpg"],
+  },
+  icons: {
+    icon: "/icon.png",
+    apple: "/icon.png",
+  },
 };
 
 export default async function RootLayout({
