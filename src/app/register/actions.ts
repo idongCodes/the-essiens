@@ -3,28 +3,7 @@
 import { cookies } from 'next/headers'
 import { sendNotification } from '@/app/actions/push'
 import { prisma } from '@/lib/prisma'
-
-// --- HELPER: VERIFY SECRET ---
-export async function checkSecret(candidate: string) {
-  if (!candidate) return false
-  
-  let validSecret = 'familyfirst'
-  
-  try {
-    const settings = await prisma.systemSettings.findUnique({ where: { id: 'global' } })
-    if (settings?.familySecret) {
-      validSecret = settings.familySecret
-    }
-  } catch (error) {
-    console.error("Failed to fetch system settings, using default secret:", error)
-    // Continue with default 'familyfirst'
-  }
-  
-  const normalizedCandidate = candidate.trim().toLowerCase()
-  
-  // Allow either the DB secret OR the legacy 'mercy' code
-  return normalizedCandidate === validSecret.toLowerCase() || normalizedCandidate === 'mercy'
-}
+import bcrypt from 'bcryptjs'
 
 export async function registerUser(formData: FormData) {
   const firstName = formData.get('firstName') as string
@@ -32,16 +11,17 @@ export async function registerUser(formData: FormData) {
   const alias = formData.get('alias') as string || firstName
   const email = formData.get('email') as string
   const phone = formData.get('phone') as string
-  const securityAnswer = formData.get('securityAnswer') as string
+  const password = formData.get('password') as string
   
   // 1. GRAB THE POSITION FROM THE FORM
   const position = formData.get('position') as string 
 
-  // 2. THE SECURITY CHECK
-  const isValid = await checkSecret(securityAnswer)
-  if (!isValid) {
-    return { success: false, message: "Incorrect security answer." }
+  if (!password || password.length < 6) {
+    return { success: false, message: "Password must be at least 6 characters." }
   }
+
+  // 2. HASH THE PASSWORD
+  const hashedPassword = await bcrypt.hash(password, 10)
 
   // 3. CHECK IF USER EXISTS
   const existingUser = await prisma.user.findUnique({
@@ -52,7 +32,7 @@ export async function registerUser(formData: FormData) {
     return { success: false, message: "This email is already registered. Please Login." }
   }
 
-  // 4. CREATE THE USER (INCLUDE POSITION!)
+  // 4. CREATE THE USER
   const newUser = await prisma.user.create({
     data: {
       firstName,
@@ -60,7 +40,8 @@ export async function registerUser(formData: FormData) {
       alias,
       email,
       phone,
-      position, // <--- THIS WAS MISSING
+      position,
+      password: hashedPassword,
     }
   })
 

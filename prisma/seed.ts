@@ -1,12 +1,17 @@
-const { PrismaClient } = require('@prisma/client')
+import { PrismaClient } from '@prisma/client'
+import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
 
 async function main() {
+  const hashedPassword = await bcrypt.hash('password123', 10)
+
   // 1. Create Admin User (Existing)
   await prisma.user.upsert({
     where: { email: 'idongesit_essien@ymail.com' },
-    update: {},
+    update: {
+      password: hashedPassword
+    },
     create: {
       email: 'idongesit_essien@ymail.com',
       firstName: 'Idongesit',
@@ -14,22 +19,13 @@ async function main() {
       alias: 'Idong',
       position: 'Creator',
       phone: '+17743126471',
+      password: hashedPassword,
       posts: {
         create: {
           content: 'Welcome to the Common Room! This is the first official post.',
         },
       },
     },
-  })
-
-  // 2. Create Default Settings (NEW)
-  await prisma.systemSettings.upsert({
-    where: { id: 'global' },
-    update: {},
-    create: {
-      id: 'global',
-      familySecret: 'familyfirst'
-    }
   })
 
   console.log('Seed successful!')

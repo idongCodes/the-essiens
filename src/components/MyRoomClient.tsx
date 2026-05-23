@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { updateProfilePhoto, updateProfileDetails, updateFamilySecret, getUserActivity, adminAddUser, adminUpdateUser } from '@/app/my-room/actions'
+import { updateProfilePhoto, updateProfileDetails, getUserActivity, adminAddUser, adminUpdateUser } from '@/app/my-room/actions'
 import { deleteUser } from '@/app/family/actions'
 import { getUploadSignature } from '@/app/actions/cloudinary'
 import { useRouter } from 'next/navigation'
@@ -13,7 +13,7 @@ import { compressImage } from '@/lib/imageUtils'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 import AdminAppUpdateForm from './AdminAppUpdateForm'
 
-export default function MyRoomClient({ user, familySecret, allUsers = [] }: { user: any, familySecret: string, allUsers?: any[] }) {
+export default function MyRoomClient({ user, allUsers = [] }: { user: any, allUsers?: any[] }) {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState('dashboard')
   const { subscribe, isSubscribed, permission } = usePushNotifications()
@@ -53,11 +53,6 @@ export default function MyRoomClient({ user, familySecret, allUsers = [] }: { us
   const [alias, setAlias] = useState<string>(user.alias || '')
   const [status, setStatus] = useState<string>(user.status || '') 
 
-  // --- SECRET EDIT STATE ---
-  const [isEditingSecret, setIsEditingSecret] = useState(false)
-  const [secretInput, setSecretInput] = useState(familySecret)
-  const [isSavingSecret, setIsSavingSecret] = useState(false)
-
   // Sync state if user prop updates
   useEffect(() => {
     setFirstName(user.firstName || '')
@@ -67,8 +62,7 @@ export default function MyRoomClient({ user, familySecret, allUsers = [] }: { us
     setLocation(user.location || '')
     setAlias(user.alias || '')
     setStatus(user.status || '')
-    setSecretInput(familySecret)
-  }, [user, familySecret])
+  }, [user])
 
   const ADMIN_EMAIL = 'idongesit_essien@ymail.com'
   const isAdmin = user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()
@@ -247,21 +241,6 @@ export default function MyRoomClient({ user, familySecret, allUsers = [] }: { us
 
   const handleEmojiSelect = (emoji: string) => {
     setStatus((prev: string) => prev + emoji)
-  }
-
-  const handleSaveSecret = async () => {
-    if (!secretInput.trim()) return
-    setIsSavingSecret(true)
-    const result = await updateFamilySecret(secretInput)
-    setIsSavingSecret(false)
-
-    if (result.success) {
-      setIsEditingSecret(false)
-      alert("Family Secret Updated! Everyone must use this new code to login.")
-      router.refresh()
-    } else {
-      alert(result.message)
-    }
   }
 
   // Calculate the profile slug based on SAVED user data (to ensure link works)
@@ -499,50 +478,6 @@ export default function MyRoomClient({ user, familySecret, allUsers = [] }: { us
             </div>
           </div>
 
-          {/* FAMILY SECRET CARD */}
-          <div className="bg-brand-sky/10 p-8 rounded-2xl shadow-sm border border-brand-sky/20">
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="text-xl font-bold text-brand-sky flex items-center gap-2"><span>🤫</span> Family Secret</h3>
-              {isAdmin && !isEditingSecret && (
-                <button onClick={() => setIsEditingSecret(true)} className="text-xs bg-white/50 hover:bg-white text-brand-sky font-bold px-3 py-1 rounded-full transition-colors border border-brand-sky/20">
-                  Edit
-                </button>
-              )}
-            </div>
-
-            <p className="text-slate-600 text-sm mb-6 leading-relaxed">
-              This is the password used to register new family members.
-            </p>
-            
-            {isEditingSecret ? (
-              <div className="flex flex-col gap-3">
-                <input 
-                  value={secretInput} 
-                  onChange={(e) => setSecretInput(e.target.value)} 
-                  className="w-full p-3 rounded-xl border border-brand-sky/30 focus:ring-2 focus:ring-brand-sky outline-none font-mono text-center font-bold text-xl"
-                />
-                <div className="flex gap-2 justify-center">
-                  <button onClick={() => { setIsEditingSecret(false); setSecretInput(familySecret); }} className="px-4 py-2 text-slate-500 font-bold text-xs hover:text-slate-700">Cancel</button>
-                  <button onClick={handleSaveSecret} disabled={isSavingSecret} className="bg-brand-sky text-white px-6 py-2 rounded-full font-bold text-xs hover:bg-sky-500 disabled:opacity-50">
-                    {isSavingSecret ? 'Updating...' : 'Update Secret'}
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="bg-white p-4 rounded-xl border border-brand-sky/20 text-center">
-                <span className="font-mono text-2xl font-bold text-slate-800 tracking-wider">
-                  {familySecret}
-                </span>
-              </div>
-            )}
-            
-            {!isEditingSecret && (
-              <p className="text-center text-xs text-brand-sky/60 mt-3 font-medium uppercase tracking-wide">
-                Shared with {isAdmin ? 'all users' : 'family'}
-              </p>
-            )}
-          </div>
-
         </div>
       )}
 
@@ -639,16 +574,16 @@ export default function MyRoomClient({ user, familySecret, allUsers = [] }: { us
               <span>💌</span> Invite Family
             </h3>
             <p className="text-sm text-slate-500 mb-4">
-              Share this link with family members. It will automatically fill in the secret code for them.
+              Share this link with family members so they can join.
             </p>
             
             <div className="flex gap-2">
               <div className="flex-1 bg-white p-3 rounded-xl border border-brand-sky/20 text-slate-500 text-sm font-mono truncate select-all">
-                {typeof window !== 'undefined' ? `${window.location.origin}/register?familySecret=${familySecret}` : 'Loading link...'}
+                {typeof window !== 'undefined' ? `${window.location.origin}/register` : 'Loading link...'}
               </div>
               <button 
                 onClick={() => {
-                  const link = `${window.location.origin}/register?familySecret=${familySecret}`
+                  const link = `${window.location.origin}/register`
                   navigator.clipboard.writeText(link)
                   alert("Link copied to clipboard!")
                 }}

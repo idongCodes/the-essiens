@@ -2,34 +2,30 @@
 
 import { cookies } from 'next/headers'
 import { prisma } from '@/lib/prisma'
+import bcrypt from 'bcryptjs'
 
 export async function login(formData: FormData) {
   const email = formData.get('email') as string
   const password = formData.get('password') as string
 
   try {
-    // 1. FETCH SECRET FROM DB
-    const settings = await prisma.systemSettings.findUnique({
-      where: { id: 'global' }
-    })
-    
-    // Fallback to 'familyfirst' if DB record is missing (safety net)
-    const currentSecret = settings?.familySecret || 'familyfirst'
-
-    // 2. CHECK PASSWORD
-    if (password !== currentSecret) {
-      return { success: false, message: 'Wrong family secret!' }
-    }
-
-    // 3. CHECK USER
+    // 1. CHECK USER
     const user = await prisma.user.findUnique({
       where: { email: email }
     })
 
     if (!user) {
-      return { success: false, message: 'Email not found. Please register first!' }
+      return { success: false, message: 'Invalid email or password.' }
     }
 
+    // 2. CHECK PASSWORD
+    const passwordMatch = await bcrypt.compare(password, user.password)
+    
+    if (!passwordMatch) {
+      return { success: false, message: 'Invalid email or password.' }
+    }
+
+    // 3. SET COOKIES
     const cookieStore = await cookies()
     cookieStore.set('session_id', user.id, {
       httpOnly: true,
