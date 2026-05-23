@@ -3,12 +3,15 @@
 import EmojiButton from '@/components/EmojiButton'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { ArrowUturnLeftIcon } from '@heroicons/react/24/outline'
+import { ArrowUturnLeftIcon, PhotoIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { getChatMessages, sendChatMessage, toggleReaction } from '@/app/chat/actions'
 import { pusherClient } from '@/lib/pusherClient'
+import { getUploadSignature } from '@/app/actions/cloudinary'
+import { useToast } from '@/context/ToastContext'
 
 export default function ChatPage() {
   const router = useRouter()
+  const toast = useToast()
   const [joinMessage, setJoinMessage] = useState<string | null>(null)
   const [messages, setMessages] = useState<any[]>([])
   const [inputMessage, setInputMessage] = useState('')
@@ -22,9 +25,18 @@ export default function ChatPage() {
   const [typingUsers, setTypingUsers] = useState<{[key: string]: string}>({})
   const [onlineUsers, setOnlineUsers] = useState<any[]>([])
   
+  // Media Upload State
+  const [mediaFile, setMediaFile] = useState<File | null>(null)
+  const [mediaType, setMediaType] = useState<'image' | 'video' | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [isSending, setIsSending] = useState(false)
+  const [isMediaModalOpen, setIsMediaModalOpen] = useState(false)
+  
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const topRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const cameraInputRef = useRef<HTMLInputElement>(null)
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const channelRef = useRef<any>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
@@ -209,10 +221,98 @@ export default function ChatPage() {
     return () => document.removeEventListener('click', handleClickOutside)
   }, [selectedMessageId])
 
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (file) {
+      const isVideo = file.type.startsWith('video/')
+      const isImage = file.type.startsWith('image/')
+
+      if (isImage) {
+        setMediaType('image')
+        setMediaFile(file)
+        setPreviewUrl(URL.createObjectURL(file))
+      } else if (isVideo) {
+        // Video duration check (max 59s)
+        const video = document.createElement('video');
+        video.preload = 'metadata';
+        video.onloadedmetadata = function() {
+          window.URL.revokeObjectURL(video.src);
+          if (video.duration > 60) {
+            toast.warning("Videos must be 60 seconds or less.")
+            if (fileInputRef.current) fileInputRef.current.value = ''
+            return
+          }
+          setMediaType('video')
+          setMediaFile(file)
+          setPreviewUrl(URL.createObjectURL(file))
+        }
+        video.src = URL.createObjectURL(file);
+      } else {
+        toast.error("Unsupported file type.")
+      }
+    }
+  }
+
+  const removeMedia = () => {
+    setMediaFile(null)
+    setMediaType(null)
+    setPreviewUrl(null)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
   const handleSendMessage = async () => {
-    if (inputMessage.trim() && currentUserId) {
+    if ((inputMessage.trim() || mediaFile) && currentUserId) {
+      setIsSending(true)
       const tempId = 'temp-' + Date.now()
       const messageContent = inputMessage.trim()
+      
+      let uploadedImageUrl = ''
+      let uploadedVideoUrl = ''
+
+      // Handle Media Upload if present
+      if (mediaFile) {
+        try {
+          const transformation = mediaType === 'video' ? 'vc_h264,ac_aac' : undefined
+          const { signature, timestamp, cloudName, apiKey, folder, eager } = await getUploadSignature(
+            'chat-media',
+            transformation
+          )
+
+          const uploadFormData = new FormData()
+          uploadFormData.append('file', mediaFile)
+          uploadFormData.append('api_key', apiKey!)
+          uploadFormData.append('timestamp', timestamp.toString())
+          uploadFormData.append('signature', signature)
+          uploadFormData.append('folder', folder)
+          if (eager) {
+            uploadFormData.append('eager', eager)
+            uploadFormData.append('eager_async', 'true')
+          }
+
+          const resourceType = mediaType === 'video' ? 'video' : 'image'
+          const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/${resourceType}/upload`
+
+          const response = await fetch(uploadUrl, {
+            method: 'POST',
+            body: uploadFormData
+          })
+
+          if (!response.ok) throw new Error('Upload failed')
+
+          const data = await response.json()
+          if (mediaType === 'video') {
+            uploadedVideoUrl = data.secure_url
+          } else {
+            uploadedImageUrl = data.secure_url
+          }
+        } catch (error) {
+          console.error("Upload error", error)
+          toast.error("Failed to upload media.")
+          setIsSending(false)
+          return
+        }
+      }
+
       const replyContext = replyingTo ? {
         id: replyingTo.id,
         content: replyingTo.content,
@@ -225,6 +325,8 @@ export default function ChatPage() {
       const tempMessage = {
         id: tempId,
         content: messageContent,
+        imageUrl: uploadedImageUrl || null,
+        videoUrl: uploadedVideoUrl || null,
         author: {
           id: currentUserId,
           firstName: currentUser?.firstName || 'Me',
@@ -240,11 +342,12 @@ export default function ChatPage() {
       setMessages(prev => [...prev, tempMessage])
       setInputMessage('')
       setReplyingTo(null)
+      removeMedia()
       
       setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 10)
 
       try {
-        const result = await sendChatMessage(messageContent, currentUserId, replyingTo?.id)
+        const result = await sendChatMessage(messageContent, currentUserId, replyingTo?.id, uploadedImageUrl, uploadedVideoUrl)
         
         if (!result.success) {
           console.error('Failed to send message:', result.message)
@@ -256,6 +359,8 @@ export default function ChatPage() {
         console.error('Error sending message:', error)
         setMessages(prev => prev.filter(m => m.id !== tempId))
         setInputMessage(messageContent)
+      } finally {
+        setIsSending(false)
       }
     }
   }
@@ -474,7 +579,21 @@ export default function ChatPage() {
                         setSelectedMessageId(showReactionPicker ? null : message.id)
                       }}
                     >
-                      <p className="text-sm break-words whitespace-pre-wrap">{message.content}</p>
+                      {message.imageUrl && (
+                        <img 
+                          src={message.imageUrl} 
+                          alt="Shared image" 
+                          className="max-w-full rounded-lg mb-2 border border-white/20 shadow-sm" 
+                        />
+                      )}
+                      {message.videoUrl && (
+                        <video 
+                          src={message.videoUrl} 
+                          controls 
+                          className="max-w-full rounded-lg mb-2 border border-white/20 shadow-sm" 
+                        />
+                      )}
+                      {message.content && <p className="text-sm break-words whitespace-pre-wrap">{message.content}</p>}
                       
                       {/* Reaction Picker Popover */}
                       {showReactionPicker && (
@@ -579,6 +698,23 @@ export default function ChatPage() {
         
         {/* Message Input */}
         <div className="p-4 border-t border-slate-200 bg-white shrink-0">
+          {/* Media Preview */}
+          {previewUrl && (
+            <div className="relative mb-3 w-fit">
+              {mediaType === 'image' ? (
+                <img src={previewUrl} alt="Preview" className="h-24 w-auto rounded-xl object-cover border-2 border-brand-sky/20" />
+              ) : (
+                <video src={previewUrl} className="h-24 w-auto rounded-xl object-cover border-2 border-brand-sky/20" />
+              )}
+              <button 
+                onClick={removeMedia}
+                className="absolute -top-2 -right-2 bg-slate-800 text-white rounded-full p-1 hover:bg-red-500 transition-colors shadow-lg"
+              >
+                <XMarkIcon className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
           {/* Replying Indicator */}
           {replyingTo && (
              <div className="flex items-center justify-between bg-slate-50 p-2 rounded-lg mb-2 text-xs border-l-4 border-brand-sky">
@@ -587,9 +723,7 @@ export default function ChatPage() {
                    <span className="text-slate-500 truncate max-w-xs">{replyingTo.content}</span>
                 </div>
                 <button onClick={() => setReplyingTo(null)} className="p-1 hover:bg-slate-200 rounded-full">
-                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-slate-500">
-                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                   </svg>
+                   <XMarkIcon className="w-4 h-4 text-slate-500" />
                 </button>
              </div>
           )}
@@ -600,6 +734,14 @@ export default function ChatPage() {
             </div>
             <div className="flex-1">
               <div className="relative flex items-center gap-2 bg-slate-100 rounded-3xl px-4 py-2 focus-within:ring-2 focus-within:ring-brand-sky transition-shadow">
+                <button 
+                  onClick={() => setIsMediaModalOpen(true)}
+                  className="shrink-0 p-1.5 hover:bg-slate-200 rounded-full text-slate-500 transition-colors"
+                  disabled={isSending}
+                >
+                  <PhotoIcon className="w-6 h-6" />
+                </button>
+
                 <input
                   ref={inputRef}
                   type="text"
@@ -608,6 +750,7 @@ export default function ChatPage() {
                   onChange={handleTyping}
                   onKeyUp={handleKeyPress}
                   className="flex-1 bg-transparent text-sm focus:outline-none min-h-[2.5rem]"
+                  disabled={isSending}
                 />
                 
                 <div className="shrink-0">
@@ -617,18 +760,95 @@ export default function ChatPage() {
                 <button 
                   onClick={handleSendMessage}
                   className="shrink-0 w-8 h-8 flex items-center justify-center hover:bg-white/50 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={!inputMessage.trim() || !currentUserId}
+                  disabled={(isSending) || (!inputMessage.trim() && !mediaFile) || !currentUserId}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6 text-brand-sky">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.771 59.771 0 013.27 20.876L5.999 12zm0 0h7.5" />
-                  </svg>
+                  {isSending ? (
+                    <div className="w-5 h-5 border-2 border-brand-sky border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6 text-brand-sky">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.771 59.771 0 013.27 20.876L5.999 12zm0 0h7.5" />
+                    </svg>
+                  )}
                 </button>
               </div>
+
+              {/* Hidden File Inputs */}
+              <input 
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept="image/*,video/*"
+                onChange={handleFileChange}
+              />
+              <input 
+                type="file"
+                ref={cameraInputRef}
+                className="hidden"
+                accept="image/*,video/*"
+                capture="environment"
+                onChange={handleFileChange}
+              />
+
               <p className="text-[10px] text-slate-400 mt-2 text-center">{formatDate(now)} • {formatTime(now)}</p>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Media Selection Modal */}
+      {isMediaModalOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4 backdrop-blur-sm" 
+          onClick={() => setIsMediaModalOpen(false)}
+        >
+          <div 
+            className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200" 
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+              <h3 className="font-bold text-slate-700">Add Media</h3>
+              <button 
+                onClick={() => setIsMediaModalOpen(false)} 
+                className="text-slate-400 hover:text-slate-600 bg-white p-1 rounded-full shadow-sm"
+              >
+                <XMarkIcon className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 flex flex-col gap-3">
+              <button 
+                onClick={() => { setIsMediaModalOpen(false); fileInputRef.current?.click(); }}
+                className="w-full flex items-center gap-4 p-4 hover:bg-slate-50 rounded-xl transition-all text-left border border-slate-100 shadow-sm hover:shadow active:scale-[0.98]"
+              >
+                <div className="bg-brand-sky/10 p-3 rounded-full text-brand-sky">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="font-bold text-slate-700">Upload Pic/Vid</div>
+                  <div className="text-xs text-slate-500">Choose from your library</div>
+                </div>
+              </button>
+              
+              <button 
+                onClick={() => { setIsMediaModalOpen(false); cameraInputRef.current?.click(); }}
+                className="w-full flex items-center gap-4 p-4 hover:bg-slate-50 rounded-xl transition-all text-left border border-slate-100 shadow-sm hover:shadow active:scale-[0.98]"
+              >
+                <div className="bg-brand-sky/10 p-3 rounded-full text-brand-sky">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="font-bold text-slate-700">Take Photo/Video</div>
+                  <div className="text-xs text-slate-500">Use your camera directly</div>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -65,15 +65,17 @@ export async function getChatMessages(cursor?: string) {
   }
 }
 
-export async function sendChatMessage(content: string, authorId: string, replyToId?: string) {
+export async function sendChatMessage(content: string, authorId: string, replyToId?: string, imageUrl?: string, videoUrl?: string) {
   try {
-    if (!content.trim()) {
+    if (!content.trim() && !imageUrl && !videoUrl) {
       return { success: false, message: 'Message cannot be empty' }
     }
 
     const message = await prisma.chatMessage.create({
       data: {
         content: content.trim(),
+        imageUrl: imageUrl || null,
+        videoUrl: videoUrl || null,
         authorId,
         replyToId: replyToId || null
       },
