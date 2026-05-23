@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect, useRef, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { registerUser, checkSecret } from './actions'
+import { registerUser } from './actions'
 
 const STEPS = [
   { id: 'firstName', title: "Let's start with your first name", placeholder: 'Jane', type: 'text', errorText: "First name is required" },
@@ -11,16 +11,15 @@ const STEPS = [
   { id: 'alias', title: "Got a nickname? (Optional)", placeholder: 'What should we call you?', type: 'text', errorText: "" },
   { id: 'phone', title: "What's a good phone number?", placeholder: '555-0123', type: 'tel', errorText: "Enter a valid phone number (min 10 digits)" },
   { id: 'email', title: "Your email address?", placeholder: 'jane@example.com', type: 'email', errorText: "Enter a valid email address" },
-  { id: 'securityAnswer', title: "🔒 Security Check", placeholder: 'Type the answer...', type: 'text', errorText: "Incorrect answer. Please try again.", description: "\"What is Charlie's Grandma's name on her Father's side?\"" },
-  { id: 'position', title: "✅ Correct! One last thing...", placeholder: "e.g. Mercy's 3rd born son", type: 'text', errorText: "This field is required", description: "What is your relation to Mercy?" }
+  { id: 'password', title: "Create a password", placeholder: 'Super secret...', type: 'password', errorText: "Password must be at least 6 characters" },
+  { id: 'confirmPassword', title: "Confirm your password", placeholder: 'Super secret again...', type: 'password', errorText: "Passwords do not match" },
+  { id: 'position', title: "✅ Almost done! One last thing...", placeholder: "e.g. Mercy's 3rd born son", type: 'text', errorText: "This field is required", description: "What is your relation to Mercy?" }
 ];
 
 function RegisterContent() {
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const secretParam = searchParams.get('familySecret')
 
   const [currentStep, setCurrentStep] = useState(0)
   const [direction, setDirection] = useState(1)
@@ -31,7 +30,8 @@ function RegisterContent() {
     alias: '',
     phone: '',
     email: '',
-    securityAnswer: secretParam || '',
+    password: '',
+    confirmPassword: '',
     position: ''
   })
 
@@ -40,11 +40,11 @@ function RegisterContent() {
     lastName: null,
     phone: null,
     email: null,
-    securityAnswer: secretParam ? null : null, 
+    password: null,
+    confirmPassword: null,
     position: null
   })
 
-  const [isCheckingSecret, setIsCheckingSecret] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   // Auto-focus input on step change
@@ -53,29 +53,6 @@ function RegisterContent() {
       inputRef.current.focus()
     }
   }, [currentStep])
-
-  // --- ASYNC SECRET VALIDATION ---
-  useEffect(() => {
-    const answer = formData.securityAnswer
-    if (!answer) {
-      setValidation(prev => ({ ...prev, securityAnswer: null }))
-      return
-    }
-
-    setIsCheckingSecret(true)
-    const timer = setTimeout(async () => {
-      try {
-        const isValid = await checkSecret(answer)
-        setValidation(prev => ({ ...prev, securityAnswer: isValid }))
-      } catch (err) {
-        console.error("Secret check failed", err)
-      } finally {
-        setIsCheckingSecret(false)
-      }
-    }, 500)
-
-    return () => clearTimeout(timer)
-  }, [formData.securityAnswer])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -104,25 +81,22 @@ function RegisterContent() {
       case 'phone':
         isValid = /^\+?[\d\s-]{10,}$/.test(value)
         break
-      case 'securityAnswer':
-        isValid = validation.securityAnswer === true
+      case 'password':
+        isValid = value.length >= 6
+        break
+      case 'confirmPassword':
+        isValid = value === formData.password
         break
       default:
         break
     }
 
-    if (name !== 'securityAnswer') {
-        setValidation(prev => ({ ...prev, [name]: isValid }))
-    }
+    setValidation(prev => ({ ...prev, [name]: isValid }))
     return isValid
   }
 
   const isNextDisabled = () => {
-    const step = STEPS[currentStep]
-    if (step.id === 'securityAnswer') {
-      return isCheckingSecret || validation.securityAnswer !== true
-    }
-    return false
+    return false // Let handleNext catch validation errors
   }
 
   const handleNext = () => {
@@ -209,23 +183,8 @@ function RegisterContent() {
 
                 {/* Validation and Feedback */}
                 <div className="h-8 mt-4">
-                    {validation[step.id] === false && step.id !== 'securityAnswer' && (
+                    {validation[step.id] === false && (
                         <p className="text-red-500 text-sm font-medium animate-in slide-in-from-top-2">{step.errorText}</p>
-                    )}
-
-                    {step.id === 'securityAnswer' && (
-                        <>
-                            {isCheckingSecret && <span className="text-brand-sky text-sm font-medium animate-pulse">Verifying family secret...</span>}
-                            {validation.securityAnswer === true && !isCheckingSecret && (
-                                <span className="text-green-600 text-sm font-medium flex items-center gap-1 animate-in zoom-in">
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                                    Verified
-                                </span>
-                            )}
-                            {validation.securityAnswer === false && !isCheckingSecret && formData.securityAnswer.length > 0 && (
-                                <span className="text-red-500 text-sm font-medium animate-in slide-in-from-top-2">{step.errorText}</span>
-                            )}
-                        </>
                     )}
                 </div>
             </div>

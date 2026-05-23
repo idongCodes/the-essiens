@@ -12,16 +12,8 @@ async function getUser() {
   })
 }
 
-async function getSystemSettings() {
-  const settings = await prisma.systemSettings.findUnique({
-    where: { id: 'global' }
-  })
-  return settings?.familySecret || 'familyfirst'
-}
-
 export default async function MyRoom() {
   const user = await getUser()
-  const familySecret = await getSystemSettings() // <--- Fetch Secret
 
   if (!user) {
     return (
@@ -41,8 +33,8 @@ export default async function MyRoom() {
 
   return (
     <main className="min-h-screen bg-slate-50 font-sans p-8">
-      {/* Pass secret and all users to client */}
-      <MyRoomClient user={user} familySecret={familySecret} allUsers={allUsers} />
+      {/* Pass all users to client */}
+      <MyRoomClient user={user} allUsers={allUsers} />
     </main>
   )
 }

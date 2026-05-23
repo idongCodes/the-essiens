@@ -15,6 +15,9 @@ model User {
   alias            String?
   position         String
   email            String            @unique
+  password         String            @default("")
+  resetToken       String?           @unique
+  resetTokenExpiry DateTime?
   phone            String?
   profileImage     String?
   bio              String?
@@ -153,10 +156,7 @@ model MessageReaction {
   @@unique([userId, messageId, emoji])
 }
 
-model SystemSettings {
-  id           String @id @default("global")
-  familySecret String @default("familyfirst")
-}
+
 
 model AlbumMedia {
 

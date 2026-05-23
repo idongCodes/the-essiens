@@ -26,7 +26,7 @@ export default function LoginPage() {
       <div className="bg-white p-8 rounded-2xl shadow-lg max-w-md w-full border border-slate-100">
         
         <h1 className="text-3xl font-bold text-center text-brand-sky mb-2">Family Login</h1>
-        <p className="text-center text-slate-400 mb-8">Enter your email and the family secret.</p>
+        <p className="text-center text-slate-400 mb-8">Enter your email and password.</p>
 
         <form action={handleSubmit} className="space-y-4">
           
@@ -42,15 +42,15 @@ export default function LoginPage() {
             />
           </div>
 
-          {/* Secret Field */}
+          {/* Password Field */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Family Secret</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
             <div className="relative">
               <input 
                 name="password" 
                 type={showPassword ? "text" : "password"} 
                 required
-                placeholder="What is the secret?"
+                placeholder="Enter your password"
                 className="w-full p-3 pr-10 rounded-lg border border-slate-200 focus:ring-2 focus:ring-brand-sky focus:outline-none"
               />
               <button
@@ -85,6 +85,9 @@ export default function LoginPage() {
         <div className="mt-8 text-center space-y-3">
           <Link href="/register" className="block text-sm text-brand-sky font-bold hover:underline">
             New to the family? Register here
+          </Link>
+          <Link href="/forgot-password" className="block text-sm text-brand-sky font-bold hover:underline">
+            Forgot your password?
           </Link>
           <Link href="/" className="block text-sm text-slate-400 hover:text-brand-sky transition-colors">
             ← Back Home
