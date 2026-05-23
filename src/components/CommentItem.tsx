@@ -65,7 +65,7 @@ export default function CommentItem({ comment, currentUserId, postId, isAdmin = 
              <div className="flex items-center gap-2">
                <button 
                  onClick={handleAuthorClick}
-                 className="text-xs font-bold text-slate-700 hover:text-brand-pink transition-colors"
+                 className="text-xs font-bold text-slate-700 hover:text-brand-sky transition-colors"
                >
                  {displayName}
                </button>

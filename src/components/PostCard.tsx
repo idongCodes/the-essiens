@@ -125,7 +125,7 @@ export default function PostCard({ post, currentUserId, isAdmin = false }: { pos
           <div className="relative">
             <button 
               onClick={handleAuthorClick}
-              className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-sm overflow-hidden bg-brand-pink text-slate-700 font-bold text-lg hover:opacity-80 transition-opacity"
+              className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-sm overflow-hidden bg-brand-sky text-slate-700 font-bold text-lg hover:opacity-80 transition-opacity"
             >
               {profileImage ? (
                  <img src={profileImage} alt={displayName} className="w-full h-full object-cover" />
@@ -142,7 +142,7 @@ export default function PostCard({ post, currentUserId, isAdmin = false }: { pos
             <div className="flex items-center gap-2">
               <button 
                 onClick={handleAuthorClick}
-                className="font-bold text-slate-800 leading-tight hover:text-brand-pink transition-colors"
+                className="font-bold text-slate-800 leading-tight hover:text-brand-sky transition-colors"
               >
                 {displayName}
               </button>

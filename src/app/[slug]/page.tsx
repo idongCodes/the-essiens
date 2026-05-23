@@ -96,7 +96,7 @@ export default async function ProfileRoom({ params }: { params: Promise<{ slug: 
             <FamilyPositionIcon position={user.position} size="medium" />
             <div className="flex flex-wrap justify-center gap-2">
               {isAdmin && (
-              <span className="bg-slate-800 text-brand-yellow px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-slate-600 flex items-center gap-1 shadow-sm">
+              <span className="bg-slate-800 text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border border-slate-600 flex items-center gap-1 shadow-sm">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3"><path fillRule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z" clipRule="evenodd" /></svg>
                 Admin
               </span>
@@ -108,7 +108,7 @@ export default async function ProfileRoom({ params }: { params: Promise<{ slug: 
           <div className="mt-6 w-full flex flex-col gap-2 items-center">
             {user.location && (
               <div className="flex items-center gap-2 text-slate-500 text-sm font-medium">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-brand-pink shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-brand-sky shrink-0">
                   <path fillRule="evenodd" d="m9.69 18.933.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 0 0 .281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 1 0 3 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 0 0 2.273 1.765 11.842 11.842 0 0 0 .976.544l.062.029.018.008.006.003ZM10 11.25a2.25 2.25 0 1 0 0-4.5 2.25 2.25 0 0 0 0 4.5Z" clipRule="evenodd" />
                 </svg>
                 {user.location}

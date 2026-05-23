@@ -410,7 +410,7 @@ export default function ChatPage() {
     <div className="fixed top-14 left-0 right-0 bottom-0 flex flex-col bg-slate-50 z-30">
       <div className="flex-1 flex flex-col max-w-5xl mx-auto w-full bg-white shadow-xl sm:border-x border-slate-200 overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-gradient-to-r from-brand-sky to-brand-pink text-white shrink-0">
+        <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-gradient-to-r from-brand-sky to-brand-sky text-white shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
             <h2 className="text-lg font-bold">Family Chat</h2>
@@ -516,7 +516,7 @@ export default function ChatPage() {
                       <div className={`flex items-center gap-2 px-1 ${isCurrentUser ? 'justify-end' : ''}`}>
                          <button 
                             onClick={() => handleUserClick(message.author)}
-                            className={`text-xs font-medium hover:text-brand-pink transition-colors cursor-pointer ${isCurrentUser ? 'text-slate-400' : 'text-slate-500'}`}
+                            className={`text-xs font-medium hover:text-brand-sky transition-colors cursor-pointer ${isCurrentUser ? 'text-slate-400' : 'text-slate-500'}`}
                           >
                             {getDisplayName(message.author)}
                           </button>

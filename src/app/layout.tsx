@@ -74,7 +74,7 @@ export default async function RootLayout({
                     href="https://instagram.com/idongcodes" 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="underline hover:text-brand-pink transition-colors"
+                    className="underline hover:text-brand-sky transition-colors"
                   >
                     idongCodes
                   </a>

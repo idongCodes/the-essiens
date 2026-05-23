@@ -75,7 +75,7 @@ export default function LoginPage() {
           {/* Submit Button */}
           <button 
             type="submit" 
-            className="w-full bg-brand-pink text-slate-800 font-bold py-3 rounded-lg hover:brightness-105 transition-all shadow-sm"
+            className="w-full bg-brand-sky text-slate-800 font-bold py-3 rounded-lg hover:brightness-105 transition-all shadow-sm"
           >
             Open the Door
           </button>

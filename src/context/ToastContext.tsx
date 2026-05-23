@@ -68,14 +68,14 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               ${toast.type === 'success' ? 'bg-white/90 border-green-200 text-green-800' : ''}
               ${toast.type === 'error' ? 'bg-white/90 border-red-200 text-red-800' : ''}
               ${toast.type === 'info' ? 'bg-white/90 border-blue-200 text-blue-800' : ''}
-              ${toast.type === 'warning' ? 'bg-white/90 border-yellow-200 text-yellow-800' : ''}
+              ${toast.type === 'warning' ? 'bg-white/90 border-sky-200 text-sky-800' : ''}
             `}
           >
             <div className="shrink-0 mt-0.5">
               {toast.type === 'success' && <CheckCircleIcon className="w-5 h-5 text-green-500" />}
               {toast.type === 'error' && <ExclamationCircleIcon className="w-5 h-5 text-red-500" />}
               {toast.type === 'info' && <InformationCircleIcon className="w-5 h-5 text-blue-500" />}
-              {toast.type === 'warning' && <ExclamationCircleIcon className="w-5 h-5 text-yellow-500" />}
+              {toast.type === 'warning' && <ExclamationCircleIcon className="w-5 h-5 text-sky-500" />}
             </div>
             
             <p className="text-sm font-medium flex-1">{toast.message}</p>

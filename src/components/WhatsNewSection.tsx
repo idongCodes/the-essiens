@@ -8,14 +8,14 @@ export default async function WhatsNewSection() {
       case 'just-released':
         return {
           text: 'Just Released',
-          color: 'text-brand-pink',
-          bgColor: 'bg-brand-pink'
+          color: 'text-brand-sky',
+          bgColor: 'bg-brand-sky'
         }
       case 'recently-updated':
         return {
           text: 'Recently Updated',
-          color: 'text-brand-yellow/80',
-          bgColor: 'bg-brand-yellow/80'
+          color: 'text-white/80',
+          bgColor: 'bg-white/80'
         }
       case 'coming-soon':
         return {
@@ -26,20 +26,20 @@ export default async function WhatsNewSection() {
       default:
         return {
           text: 'New',
-          color: 'text-brand-pink',
-          bgColor: 'bg-brand-pink'
+          color: 'text-brand-sky',
+          bgColor: 'bg-brand-sky'
         }
     }
   }
 
   return (
-    <section className="py-12 px-6 bg-gradient-to-br from-brand-sky/5 to-brand-pink/5 border-t border-slate-200">
+    <section className="py-12 px-6 bg-gradient-to-br from-brand-sky/5 to-brand-sky/5 border-t border-slate-200">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8">
           <h2 className="text-2xl font-bold mb-4 text-slate-800 flex items-center justify-center gap-2">
             <span className="relative">
               What&apos;s New
-              <span className="absolute -top-1 -right-2 w-2 h-2 bg-brand-pink rounded-full animate-pulse"></span>
+              <span className="absolute -top-1 -right-2 w-2 h-2 bg-brand-sky rounded-full animate-pulse"></span>
             </span>
           </h2>
           <p className="text-slate-600 max-w-2xl mx-auto text-sm">

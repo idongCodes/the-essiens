@@ -32,7 +32,7 @@ export default async function CommonRoom() {
             The Common Room
           </h1>
           <h2 className="text-slate-500 font-medium text-sm md:text-lg pb-1 md:text-right">
-            Welcome home, <span className="text-brand-pink font-bold">{welcomeName}</span>.
+            Welcome home, <span className="text-brand-sky font-bold">{welcomeName}</span>.
           </h2>
         </div>
 

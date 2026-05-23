@@ -126,7 +126,7 @@ export default function Navbar() {
       {/* Top Navbar */}
       <nav className="fixed top-0 left-0 right-0 z-40 bg-brand-sky/95 backdrop-blur-sm border-b border-white/10 shadow-sm">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 text-white font-bold text-lg tracking-tight hover:text-brand-cream transition-colors drop-shadow-sm">
+          <Link href="/" className="flex items-center gap-2 text-white font-bold text-lg tracking-tight hover:text-white transition-colors drop-shadow-sm">
             <Image
               src="/images/logo.png"
               alt="The Essiens Logo"
@@ -140,7 +140,7 @@ export default function Navbar() {
           <div className="flex items-center gap-4">
             {/* Notification bell next to menu on desktop/tablet for quick access (optional) */}
             {isLoggedIn && unreadCount > 0 && (
-              <Link href="/notifications" className="relative text-white hover:text-brand-yellow transition-colors">
+              <Link href="/notifications" className="relative text-white hover:text-white transition-colors">
                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
@@ -154,7 +154,7 @@ export default function Navbar() {
             {/* Toggle Button (3 vertical dots) */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="text-white hover:text-brand-yellow focus:outline-none transition-colors p-1"
+              className="text-white hover:text-white focus:outline-none transition-colors p-1"
               aria-label="Toggle navigation menu"
             >
               <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -197,7 +197,7 @@ export default function Navbar() {
                     ${active ? 'bg-white/20 text-white font-semibold' : 'text-white/90 hover:bg-white/10 hover:text-white'}
                   `}
                 >
-                  <div className={active ? 'text-brand-yellow' : ''}>{item.icon}</div>
+                  <div className={active ? 'text-white' : ''}>{item.icon}</div>
                   <span>{item.name}</span>
                 </button>
               )
@@ -211,7 +211,7 @@ export default function Navbar() {
                     ${active ? 'bg-white/20 text-white font-semibold' : 'text-white/90 hover:bg-white/10 hover:text-white'}
                   `}
                 >
-                  <div className={active ? 'text-brand-yellow' : ''}>{item.icon}</div>
+                  <div className={active ? 'text-white' : ''}>{item.icon}</div>
                   <span>{item.name}</span>
                 </Link>
               )
@@ -240,7 +240,7 @@ export default function Navbar() {
               onClick={closeMenu}
               className="flex items-center gap-3 px-4 py-3 text-white/90 hover:text-white hover:bg-white/10 rounded-xl transition-colors"
             >
-              <svg className="w-5 h-5 text-brand-yellow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
               </svg>
               <span>Login</span>
