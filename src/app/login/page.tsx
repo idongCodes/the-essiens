@@ -3,10 +3,12 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
 import { login } from './actions'
 
 export default function LoginPage() {
   const [error, setError] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
 
   async function handleSubmit(formData: FormData) {
@@ -43,13 +45,26 @@ export default function LoginPage() {
           {/* Secret Field */}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Family Secret</label>
-            <input 
-              name="password" 
-              type="password" 
-              required
-              placeholder="What is the secret?"
-              className="w-full p-3 rounded-lg border border-slate-200 focus:ring-2 focus:ring-brand-sky focus:outline-none"
-            />
+            <div className="relative">
+              <input 
+                name="password" 
+                type={showPassword ? "text" : "password"} 
+                required
+                placeholder="What is the secret?"
+                className="w-full p-3 pr-10 rounded-lg border border-slate-200 focus:ring-2 focus:ring-brand-sky focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none"
+              >
+                {showPassword ? (
+                  <EyeSlashIcon className="h-5 w-5" aria-hidden="true" />
+                ) : (
+                  <EyeIcon className="h-5 w-5" aria-hidden="true" />
+                )}
+              </button>
+            </div>
           </div>
 
           {/* Error Message Display */}
