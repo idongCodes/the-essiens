@@ -72,11 +72,11 @@ export default function Home() {
       </section>
 
       <section className="bg-white py-20 px-6">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl font-bold mb-12 text-center text-slate-700">Highlights</h2>
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-3xl font-bold mb-12 text-center text-brand-sky">Highlights</h2>
           
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-slate-50">
               <div className="text-4xl mb-4">🏡</div>
               <h3 className="font-bold text-xl mb-3 text-brand-sky">The Common Room</h3>
               <p className="text-slate-600">
@@ -84,19 +84,27 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+            <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-slate-50">
               <div className="text-4xl mb-4">💬</div>
               <h3 className="font-bold text-xl mb-3 text-brand-sky">Stay Connected</h3>
               <p className="text-slate-600">
-                This platform was built to effortlessly keep our busy family in touch. Share life&apos;s moments as they happen without any hassle.
+                Effortlessly keep our busy family in touch. Share life&apos;s moments as they happen without the pressure of scheduling.
               </p>
             </div>
 
-            <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+            <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-slate-50">
+              <div className="text-4xl mb-4">⚡</div>
+              <h3 className="font-bold text-xl mb-3 text-brand-sky">Live Chat</h3>
+              <p className="text-slate-600">
+                Real-time conversations for those "right now" moments. Connect instantly with any family member currently online.
+              </p>
+            </div>
+
+            <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-slate-50">
               <div className="text-4xl mb-4">🔒</div>
               <h3 className="font-bold text-xl mb-3 text-brand-sky">Family Only</h3>
               <p className="text-slate-600">
-                A private, safe space dedicated exclusively to our family. Share sacred moments safely - no public feeds or strangers allowed.
+                A private, safe space dedicated exclusively to our family. No public feeds or strangers allowed.
               </p>
             </div>
           </div>
