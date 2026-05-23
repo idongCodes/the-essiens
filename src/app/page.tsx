@@ -3,7 +3,6 @@ import Link from "next/link";
 import TestimonialSection from "@/components/TestimonialSection";
 import DailyVerse from "@/components/DailyVerse"; // <--- 1. Import
 import FeedbackSection from "@/components/FeedbackSection";
-import WhatsNewSection from "@/components/WhatsNewSection";
 
 export default function Home() {
   return (
@@ -108,9 +107,6 @@ export default function Home() {
 
       {/* Global Feedback Section */}
       <FeedbackSection />
-
-      {/* What's New Section */}
-      <WhatsNewSection />
 
     </main>
   );
