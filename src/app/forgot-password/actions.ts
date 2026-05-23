@@ -56,8 +56,8 @@ export async function requestPasswordReset(formData: FormData) {
     })
 
     return { success: true, message: 'If an account exists, a password reset link has been sent.' }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Password reset request error:', error)
-    return { success: false, message: 'An error occurred. Please try again later.' }
+    return { success: false, message: `An error occurred: ${error?.message || String(error)}` }
   }
 }
