@@ -272,7 +272,7 @@ export default function MyRoomClient({ user, allUsers = [] }: { user: any, allUs
           {/* Mirror Frame Header */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-brand-pink/20 to-brand-sky/20 rounded-full flex items-center justify-center">
+              <div className="w-12 h-12 bg-gradient-to-br from-brand-sky/20 to-brand-sky/20 rounded-full flex items-center justify-center">
                 <span className="text-2xl">🪞</span>
               </div>
               <h2 className="text-2xl font-bold text-slate-800">My Mirror</h2>
@@ -283,7 +283,7 @@ export default function MyRoomClient({ user, allUsers = [] }: { user: any, allUs
           {/* Mirror Content - Visitor's Perspective */}
           <div className="max-w-2xl mx-auto">
             {/* Profile Card as seen by others */}
-            <div className="bg-gradient-to-br from-brand-sky/5 to-brand-pink/5 p-8 rounded-2xl border border-brand-sky/10 mb-6">
+            <div className="bg-gradient-to-br from-brand-sky/5 to-brand-sky/5 p-8 rounded-2xl border border-brand-sky/10 mb-6">
               <div className="flex items-center gap-6 mb-6">
                 {/* Avatar */}
                 <div className="relative">
@@ -316,7 +316,7 @@ export default function MyRoomClient({ user, allUsers = [] }: { user: any, allUs
               {/* Location */}
               {location && (
                 <div className="flex items-center gap-2 text-slate-600 mb-4">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-brand-pink">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-brand-sky">
                     <path fillRule="evenodd" d="m9.69 18.933.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 0 0 .281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 1 0 3 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 0 0 2.273 1.765 11.842 11.842 0 0 0 .976.544l.062.029.018.008.006.003ZM10 11.25a2.25 2.25 0 1 0 0-4.5 2.25 2.25 0 0 0 0 4.5Z" clipRule="evenodd" />
                   </svg>
                   <span className="text-sm font-medium">{location}</span>
@@ -362,8 +362,8 @@ export default function MyRoomClient({ user, allUsers = [] }: { user: any, allUs
                   {/* Phone */}
                   {user.phone && (
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-brand-pink/10 rounded-full flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-brand-pink">
+                      <div className="w-8 h-8 bg-brand-sky/10 rounded-full flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-brand-sky">
                           <path fillRule="evenodd" d="M2 3.5A1.5 1.5 0 0 1 3.5 2h1.148a1.5 1.5 0 0 1 1.465 1.175l.716 3.223a1.5 1.5 0 0 1-1.052 1.767l-.933.267c-.41.117-.643.555-.48.95a11.542 11.542 0 0 0 6.254 6.254c.395.163.833-.07.95-.48l.267-.933a1.5 1.5 0 0 1 1.767-1.052l3.223.716A1.5 1.5 0 0 1 18 15.352V16.5a1.5 1.5 0 0 1-1.5 1.5H15c-1.149 0-2.263-.15-3.326-.43A13.022 13.022 0 0 1 2.43 8.326 13.019 13.019 0 0 1 2 5V3.5Z" clipRule="evenodd" />
                         </svg>
                       </div>
@@ -397,24 +397,24 @@ export default function MyRoomClient({ user, allUsers = [] }: { user: any, allUs
                 <div className="text-2xl font-bold text-brand-sky">👨‍👩‍👧‍👦</div>
                 <div className="text-xs text-slate-600 mt-1">Family Member</div>
               </div>
-              <div className="bg-brand-pink/10 p-4 rounded-xl text-center border border-brand-pink/20">
-                <div className="text-2xl font-bold text-brand-pink">📅</div>
+              <div className="bg-brand-sky/10 p-4 rounded-xl text-center border border-brand-sky/20">
+                <div className="text-2xl font-bold text-brand-sky">📅</div>
                 <div className="text-xs text-slate-600 mt-1">
                   Joined {new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                 </div>
               </div>
-              <div className="bg-brand-yellow/20 p-4 rounded-xl text-center border border-brand-yellow/30">
-                <div className="text-2xl font-bold text-brand-yellow/80">✨</div>
+              <div className="bg-white/20 p-4 rounded-xl text-center border border-white/30">
+                <div className="text-2xl font-bold text-white/80">✨</div>
                 <div className="text-xs text-slate-600 mt-1">Active</div>
               </div>
-              <div className="bg-brand-cream/30 p-4 rounded-xl text-center border border-brand-cream/50">
-                <div className="text-2xl font-bold text-brand-cream/70">🏠</div>
+              <div className="bg-white/30 p-4 rounded-xl text-center border border-white/50">
+                <div className="text-2xl font-bold text-white/70">🏠</div>
                 <div className="text-xs text-slate-600 mt-1">Common Room</div>
               </div>
             </div>
 
             {/* Visitor's Perspective Message */}
-            <div className="bg-gradient-to-r from-brand-sky/10 to-brand-pink/10 p-6 rounded-2xl border border-brand-sky/20 text-center">
+            <div className="bg-gradient-to-r from-brand-sky/10 to-brand-sky/10 p-6 rounded-2xl border border-brand-sky/20 text-center">
               <div className="text-3xl mb-3">👁️</div>
               <h4 className="text-lg font-bold text-slate-800 mb-2">Through Family Eyes</h4>
               <p className="text-slate-600 text-sm leading-relaxed max-w-md mx-auto">
@@ -442,7 +442,7 @@ export default function MyRoomClient({ user, allUsers = [] }: { user: any, allUs
       <div className="flex border-b border-slate-200 mb-8 overflow-x-auto">
         <button onClick={() => setActiveTab('dashboard')} className={`pb-4 px-6 font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'dashboard' ? 'border-b-4 border-brand-sky text-brand-sky' : 'text-slate-400 hover:text-slate-600'}`}>Dashboard</button>
         <button onClick={() => setActiveTab('activity')} className={`pb-4 px-6 font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'activity' ? 'border-b-4 border-violet-500 text-violet-500' : 'text-slate-400 hover:text-slate-600'}`}>Activity</button>
-        <button onClick={() => setActiveTab('settings')} className={`pb-4 px-6 font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'settings' ? 'border-b-4 border-brand-yellow text-brand-yellow' : 'text-slate-400 hover:text-slate-600'}`}>Settings</button>
+        <button onClick={() => setActiveTab('settings')} className={`pb-4 px-6 font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'settings' ? 'border-b-4 border-white text-white' : 'text-slate-400 hover:text-slate-600'}`}>Settings</button>
         {isAdmin && (
           <button onClick={() => setActiveTab('admin')} className={`pb-4 px-6 font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'admin' ? 'border-b-4 border-red-500 text-red-500' : 'text-slate-400 hover:text-slate-600'}`}>Admin</button>
         )}

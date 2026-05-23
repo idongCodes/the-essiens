@@ -249,7 +249,7 @@ function RegisterContent() {
 
         {/* Footer Link */}
         <div className="mt-6 text-center">
-          <Link href="/login" className="text-sm text-slate-400 hover:text-brand-pink transition-colors">
+          <Link href="/login" className="text-sm text-slate-400 hover:text-brand-sky transition-colors">
             Already have an account? Login
           </Link>
         </div>
@@ -259,7 +259,7 @@ function RegisterContent() {
 
 export default function RegisterPage() {
   return (
-    <main className="min-h-screen flex items-center justify-center bg-brand-cream px-4 py-10 font-sans">
+    <main className="min-h-screen flex items-center justify-center bg-white px-4 py-10 font-sans">
       <Suspense fallback={<div className="text-brand-sky font-bold animate-pulse">Loading...</div>}>
         <RegisterContent />
       </Suspense>

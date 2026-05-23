@@ -28,7 +28,7 @@ export default function EmojiButton({ onEmojiSelect, color = "text-slate-400" }:
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`${color} hover:text-brand-yellow transition-colors p-1.5 rounded-full hover:bg-slate-100 flex items-center justify-center`}
+        className={`${color} hover:text-white transition-colors p-1.5 rounded-full hover:bg-slate-100 flex items-center justify-center`}
         title="Add Emoji"
       >
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">

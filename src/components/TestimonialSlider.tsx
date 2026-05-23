@@ -194,7 +194,7 @@ export default function TestimonialSlider({ testimonials, isUserAdmin }: { testi
                         />
                       </div>
                     ) : t.displayAvatar ? (
-                      <div className="w-10 h-10 bg-brand-pink text-slate-900 font-bold rounded-full flex items-center justify-center shrink-0 shadow-lg border-2 border-white/20">
+                      <div className="w-10 h-10 bg-brand-sky text-slate-900 font-bold rounded-full flex items-center justify-center shrink-0 shadow-lg border-2 border-white/20">
                         {t.displayAvatar}
                       </div>
                     ) : (

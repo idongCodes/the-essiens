@@ -34,7 +34,7 @@ export default function Home() {
           </h1>
           
           {/* Tagline */}
-          <p className="text-brand-cream text-xl md:text-2xl font-medium max-w-2xl leading-relaxed mb-12 drop-shadow-sm">
+          <p className="text-white text-xl md:text-2xl font-medium max-w-2xl leading-relaxed mb-12 drop-shadow-sm">
             "A safe space for family. No strangers. No public. Just family."
           </p>
 
@@ -42,14 +42,14 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row gap-4 w-full justify-center mb-8">
             <Link 
               href="/common-room"
-              className="bg-brand-yellow text-slate-800 px-8 py-4 rounded-full font-bold shadow-lg hover:bg-white hover:scale-105 transition-all text-lg"
+              className="bg-white text-slate-800 px-8 py-4 rounded-full font-bold shadow-lg hover:bg-white hover:scale-105 transition-all text-lg"
             >
               Enter Common Room
             </Link>
             
             <Link 
               href="/register"
-              className="bg-brand-pink text-slate-800 px-8 py-4 rounded-full font-bold shadow-lg hover:brightness-110 hover:scale-105 transition-all text-lg"
+              className="bg-brand-sky text-slate-800 px-8 py-4 rounded-full font-bold shadow-lg hover:brightness-110 hover:scale-105 transition-all text-lg"
             >
               Join Family
             </Link>
@@ -66,13 +66,13 @@ export default function Home() {
           <h2 className="text-3xl font-bold mb-8 text-brand-sky">The Mission</h2>
           <p className="text-lg text-left text-slate-600 leading-relaxed mb-8">
             In the age of endless notifications and cluttered group chats, staying connected shouldn&apos;t be complicated.
-            <strong className="text-brand-pink"> The Essiens</strong> simplifies family communication. 
+            <strong className="text-brand-sky"> The Essiens</strong> simplifies family communication. 
             Share a quick video, snap a photo, or celebrate an accomplishment—all in one place, without sorting through multiple chats.
           </p>
         </div>
       </section>
 
-      <section className="bg-brand-cream py-20 px-6">
+      <section className="bg-white py-20 px-6">
         <div className="max-w-5xl mx-auto">
           <h2 className="text-3xl font-bold mb-12 text-center text-slate-700">Highlights</h2>
           

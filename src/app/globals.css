@@ -1,11 +1,8 @@
 @import "tailwindcss";
 
 @theme {
-  /* This automatically creates bg-brand-sky, text-brand-pink, etc. */
+  /* This automatically creates bg-brand-sky, text-brand-sky, etc. */
   --color-brand-sky: #87CEEB;    /* Sky blue */
-  --color-brand-pink: #FFC5D3;   /* Blush Pink */
-  --color-brand-yellow: #FFFFC5; /* Pale Yellow */
-  --color-brand-cream: #FDFBD4;  /* Cream */
 }
 
 /* Force light theme regardless of device preferences */

@@ -60,7 +60,7 @@ export default async function FamilyDirectory({ searchParams }: { searchParams: 
             {positionFilter && (
               <Link 
                 href="/family" 
-                className="inline-flex items-center gap-1 text-sm text-brand-pink hover:text-brand-sky transition-colors mt-2"
+                className="inline-flex items-center gap-1 text-sm text-brand-sky hover:text-brand-sky transition-colors mt-2"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -69,7 +69,7 @@ export default async function FamilyDirectory({ searchParams }: { searchParams: 
               </Link>
             )}
           </div>
-          <Link href="/common-room" className="text-sm font-bold text-slate-400 hover:text-brand-pink transition-colors">
+          <Link href="/common-room" className="text-sm font-bold text-slate-400 hover:text-brand-sky transition-colors">
             &larr; Back to Common Room
           </Link>
         </div>
@@ -110,7 +110,7 @@ export default async function FamilyDirectory({ searchParams }: { searchParams: 
               {/* INFO */}
               <div className="flex flex-col min-w-0">
                 <div className="flex items-center gap-2">
-                  <Link href={`/${user.firstName.toLowerCase()}s-room`} className="font-bold text-slate-800 text-lg truncate hover:text-brand-pink transition-colors">
+                  <Link href={`/${user.firstName.toLowerCase()}s-room`} className="font-bold text-slate-800 text-lg truncate hover:text-brand-sky transition-colors">
                     {user.firstName} {user.lastName}
                   </Link>
                   {user.email === 'idongesit_essien@ymail.com' && (
@@ -125,7 +125,7 @@ export default async function FamilyDirectory({ searchParams }: { searchParams: 
                 </div>
                 
                 {user.alias && (
-                  <Link href={`/${user.firstName.toLowerCase()}s-room`} className="text-sm text-slate-400 font-medium truncate hover:text-brand-pink transition-colors">
+                  <Link href={`/${user.firstName.toLowerCase()}s-room`} className="text-sm text-slate-400 font-medium truncate hover:text-brand-sky transition-colors">
                     @{user.alias}
                   </Link>
                 )}

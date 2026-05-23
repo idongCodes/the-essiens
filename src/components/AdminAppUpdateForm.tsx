@@ -39,7 +39,7 @@ export default function AdminAppUpdateForm() {
   }
 
   return (
-    <div className="bg-white p-8 rounded-2xl shadow-sm border border-brand-pink/20">
+    <div className="bg-white p-8 rounded-2xl shadow-sm border border-brand-sky/20">
       <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
         <span>📢</span> Publish App Update
       </h3>
@@ -66,7 +66,7 @@ export default function AdminAppUpdateForm() {
               required
               value={title} 
               onChange={(e) => setTitle(e.target.value)} 
-              className="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-brand-pink outline-none bg-slate-50"
+              className="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-brand-sky outline-none bg-slate-50"
               placeholder="e.g. New Chat Feature!"
             />
           </div>
@@ -79,7 +79,7 @@ export default function AdminAppUpdateForm() {
             value={description} 
             onChange={(e) => setDescription(e.target.value)} 
             rows={3} 
-            className="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-brand-pink outline-none bg-slate-50 resize-none"
+            className="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-brand-sky outline-none bg-slate-50 resize-none"
             placeholder="Explain what's new..."
           />
         </div>
@@ -90,7 +90,7 @@ export default function AdminAppUpdateForm() {
             <select 
               value={category} 
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-brand-pink outline-none bg-slate-50"
+              className="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-brand-sky outline-none bg-slate-50"
             >
               <option value="feature">Feature</option>
               <option value="fix">Fix</option>
@@ -103,7 +103,7 @@ export default function AdminAppUpdateForm() {
             <select 
               value={status} 
               onChange={(e) => setStatus(e.target.value)}
-              className="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-brand-pink outline-none bg-slate-50"
+              className="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-brand-sky outline-none bg-slate-50"
             >
               <option value="just-released">Just Released</option>
               <option value="recently-updated">Recently Updated</option>
@@ -116,7 +116,7 @@ export default function AdminAppUpdateForm() {
             <input 
               value={version} 
               onChange={(e) => setVersion(e.target.value)} 
-              className="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-brand-pink outline-none bg-slate-50"
+              className="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-brand-sky outline-none bg-slate-50"
               placeholder="e.g. v2.0"
             />
           </div>
@@ -126,7 +126,7 @@ export default function AdminAppUpdateForm() {
           <button 
             type="submit"
             disabled={isSubmitting}
-            className="bg-brand-pink text-white px-8 py-2.5 rounded-full font-bold text-sm hover:bg-pink-500 transition-colors shadow-sm disabled:opacity-50"
+            className="bg-brand-sky text-white px-8 py-2.5 rounded-full font-bold text-sm hover:bg-sky-500 transition-colors shadow-sm disabled:opacity-50"
           >
             {isSubmitting ? 'Publishing...' : 'Publish Update'}
           </button>
