@@ -11,7 +11,6 @@ import StatusBadge from './StatusBadge'
 import FamilyPositionIcon from './FamilyPositionIcon'
 import { compressImage } from '@/lib/imageUtils'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
-import AdminAppUpdateForm from './AdminAppUpdateForm'
 
 export default function MyRoomClient({ user, allUsers = [] }: { user: any, allUsers?: any[] }) {
   const router = useRouter()
@@ -810,9 +809,6 @@ export default function MyRoomClient({ user, allUsers = [] }: { user: any, allUs
             </div>
           </div>
           
-          <hr className="border-slate-100" />
-          
-          <AdminAppUpdateForm />
         </div>
       )}
     </div>

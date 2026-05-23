@@ -180,22 +180,4 @@ model AlbumMedia {
 
 
 
-model AppUpdate {
 
-  id          String   @id @default(cuid())
-
-  title       String
-
-  description String
-
-  icon        String   @default("✨")
-
-  category    String
-
-  status      String   @default("just-released")
-
-  version     String?
-
-  createdAt   DateTime @default(now())
-
-}
