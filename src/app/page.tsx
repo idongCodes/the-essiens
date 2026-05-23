@@ -64,17 +64,17 @@ export default function Home() {
       <section className="py-20 px-6 bg-white">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-8 text-brand-sky">The Mission</h2>
-          <p className="text-lg text-slate-600 leading-relaxed mb-8">
-            In the age of endless notifications and cluttered group chats, staying genuinely connected feels like a chore.
-            <strong className="text-brand-pink"> The Essiens</strong> is designed to eliminate friction. 
-            No more long, unplanned phone calls or searching through hundreds of text messages for one update.
+          <p className="text-lg text-left text-slate-600 leading-relaxed mb-8">
+            In the age of endless notifications and cluttered group chats, staying connected shouldn&apos;t be complicated.
+            <strong className="text-brand-pink"> The Essiens</strong> simplifies family communication. 
+            Share a quick video, snap a photo, or celebrate an accomplishment—all in one place, without sorting through multiple chats.
           </p>
         </div>
       </section>
 
       <section className="bg-brand-cream py-20 px-6">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl font-bold mb-12 text-center text-slate-700">How It Works</h2>
+          <h2 className="text-3xl font-bold mb-12 text-center text-slate-700">Highlights</h2>
           
           <div className="grid md:grid-cols-3 gap-8">
             <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
@@ -86,18 +86,18 @@ export default function Home() {
             </div>
 
             <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
-              <div className="text-4xl mb-4">🔇</div>
-              <h3 className="font-bold text-xl mb-3 text-brand-sky">Beat Call Fatigue</h3>
+              <div className="text-4xl mb-4">💬</div>
+              <h3 className="font-bold text-xl mb-3 text-brand-sky">Stay Connected</h3>
               <p className="text-slate-600">
-                Skip the hassle of scheduling video calls. Post asynchronous updates when you are free.
+                This platform was built to effortlessly keep our busy family in touch. Share life&apos;s moments as they happen without any hassle.
               </p>
             </div>
 
             <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
               <div className="text-4xl mb-4">🔒</div>
-              <h3 className="font-bold text-xl mb-3 text-brand-sky">Invite Only</h3>
+              <h3 className="font-bold text-xl mb-3 text-brand-sky">Family Only</h3>
               <p className="text-slate-600">
-                Protected by family trivia. "What is your aunt's middle name?" keeps strangers out.
+                A private, safe space dedicated exclusively to our family. Share sacred moments safely - no public feeds or strangers allowed.
               </p>
             </div>
           </div>
