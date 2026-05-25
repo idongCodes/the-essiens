@@ -23,6 +23,7 @@ model User {
   bio              String?
   location         String?
   status           String?
+  isAdmin          Boolean           @default(false)
   createdAt        DateTime          @default(now())
   chatMessages     ChatMessage[]     @relation("UserChatMessages")
   messageReactions MessageReaction[]

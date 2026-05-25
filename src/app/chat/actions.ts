@@ -232,14 +232,22 @@ export async function editChatMessage(messageId: string, userId: string, newCont
 
 export async function deleteChatMessage(messageId: string, userId: string) {
   try {
+    const user = await prisma.user.findUnique({ where: { id: userId } })
     const message = await prisma.chatMessage.findUnique({ where: { id: messageId } })
+    
     if (!message) return { success: false, message: 'Message not found' }
-    if (message.authorId !== userId) return { success: false, message: 'Unauthorized' }
+    
+    const isAdmin = user?.isAdmin || user?.email === 'idongesit_essien@ymail.com'
+    const isAuthor = message.authorId === userId
 
-    // Check 15 minutes limit
-    const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000)
-    if (message.createdAt < fifteenMinutesAgo) {
-      return { success: false, message: 'Message can only be deleted within 15 minutes of sending' }
+    if (!isAuthor && !isAdmin) return { success: false, message: 'Unauthorized' }
+
+    // Check 15 minutes limit only for non-admins
+    if (!isAdmin) {
+      const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000)
+      if (message.createdAt < fifteenMinutesAgo) {
+        return { success: false, message: 'Message can only be deleted within 15 minutes of sending' }
+      }
     }
 
     await prisma.chatMessage.delete({ where: { id: messageId } })
@@ -250,5 +258,31 @@ export async function deleteChatMessage(messageId: string, userId: string) {
   } catch (error) {
     console.error('Error deleting chat message:', error)
     return { success: false, message: 'Failed to delete message' }
+  }
+}
+
+export async function getChatMedia() {
+  try {
+    const mediaMessages = await prisma.chatMessage.findMany({
+      where: {
+        OR: [
+          { imageUrl: { not: null } },
+          { videoUrl: { not: null } }
+        ]
+      },
+      select: {
+        id: true,
+        imageUrl: true,
+        videoUrl: true,
+        createdAt: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    })
+    return { success: true, media: mediaMessages }
+  } catch (error) {
+    console.error('Error fetching chat media:', error)
+    return { success: false, message: 'Failed to fetch chat media' }
   }
 }
