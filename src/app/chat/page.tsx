@@ -32,6 +32,7 @@ export default function ChatPage() {
   const [isSending, setIsSending] = useState(false)
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false)
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null)
+  const [profileModal, setProfileModal] = useState<{ author: any, x: number, y: number } | null>(null)
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const topRef = useRef<HTMLDivElement>(null)
@@ -222,14 +223,17 @@ export default function ChatPage() {
     }
   }, [currentUserId])
 
-  // Close reaction picker when clicking outside
+  // Close reaction picker or profile modal when clicking outside
   useEffect(() => {
-    const handleClickOutside = () => setSelectedMessageId(null)
-    if (selectedMessageId) {
+    const handleClickOutside = () => {
+      setSelectedMessageId(null)
+      setProfileModal(null)
+    }
+    if (selectedMessageId || profileModal) {
       document.addEventListener('click', handleClickOutside)
     }
     return () => document.removeEventListener('click', handleClickOutside)
-  }, [selectedMessageId])
+  }, [selectedMessageId, profileModal])
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -516,7 +520,7 @@ export default function ChatPage() {
     return author.alias || `${author.firstName} ${author.lastName}`
   }
 
-  const renderAvatar = (author: any, size: 'small' | 'medium' = 'small', onClick: () => void = () => {}) => {
+  const renderAvatar = (author: any, size: 'small' | 'medium' = 'small', onClick: (e: React.MouseEvent) => void = () => {}) => {
     const sizeClasses = size === 'small' ? 'w-8 h-8 text-sm' : 'w-10 h-10 text-base'
     
     if (author.profileImage) {
@@ -532,18 +536,23 @@ export default function ChatPage() {
     
     const initial = (author.alias || author.firstName || 'U')[0].toUpperCase()
     return (
-      <div className={`${sizeClasses} rounded-full bg-brand-sky text-white flex items-center justify-center font-bold cursor-pointer`} onClick={onClick}>
+      <div 
+        className={`${sizeClasses} rounded-full bg-brand-sky text-white flex items-center justify-center font-bold cursor-pointer`}
+        onClick={onClick}
+      >
         {initial}
       </div>
     )
   }
 
-  const handleUserClick = (author: any) => {
-    const displayName = author.alias || author.firstName
-    if(displayName){
-        const user = displayName.toLowerCase().replace(/\s+/g, '-').trim()
-        router.push(`/${user}s-room`)
-    }
+  const handleAvatarClick = (e: React.MouseEvent, author: any) => {
+    e.stopPropagation()
+    // Small offset so it doesn't appear exactly under the cursor
+    setProfileModal({
+      author,
+      x: e.clientX,
+      y: e.clientY
+    })
   }
 
   const renderSystemMessage = (message: string, time: Date) => {
@@ -616,7 +625,7 @@ export default function ChatPage() {
 
               return (
                 <div key={message.id} className={`flex gap-3 relative group ${isCurrentUser ? 'justify-end' : ''}`}>
-                  {!isCurrentUser && renderAvatar(message.author, 'small', () => handleUserClick(message.author))}
+                  {!isCurrentUser && renderAvatar(message.author, 'small', (e) => handleAvatarClick(e, message.author))}
                   
                   <div className={`flex flex-col ${isCurrentUser ? 'items-end' : 'items-start'} max-w-[75%]`}>
                     
@@ -720,19 +729,6 @@ export default function ChatPage() {
                     {/* Meta & Reactions */}
                     <div className="flex flex-col gap-1 mt-1">
                       <div className={`flex items-center gap-2 px-1 ${isCurrentUser ? 'justify-end' : ''}`}>
-                         <button 
-                            onClick={() => handleUserClick(message.author)}
-                            className={`text-xs font-medium hover:text-brand-sky transition-colors cursor-pointer ${isCurrentUser ? 'text-slate-400' : 'text-slate-500'}`}
-                          >
-                            {getDisplayName(message.author)}
-                          </button>
-                          {(message.author as any).email === 'idongesit_essien@ymail.com' && (
-                             <span className="bg-slate-700 text-white text-[8px] font-bold px-1 py-0.5 rounded flex items-center gap-0.5 shadow-sm">
-                               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-2 h-2"><path fillRule="evenodd" d="M10.362 1.093a.75.75 0 0 0-.724 0L2.523 5.018 10 9.143l7.477-4.125-7.115-3.925ZM18 6.443l-7.25 4v8.25l6.862-3.786A.75.75 0 0 0 18 14.25V6.443Zm-8.75 12.25v-8.25l-7.25-4v7.807a.75.75 0 0 0 .388.657l6.862 3.786Z" clipRule="evenodd" /></svg>
-                               Admin
-                             </span>
-                          )}
-                          <span className={`text-xs ${isCurrentUser ? 'text-slate-300' : 'text-slate-300'}`}>•</span>
                           <p className={`text-[10px] ${isCurrentUser ? 'text-slate-400' : 'text-slate-400'}`}>
                             {formatTime(message.createdAt)}
                             {message.isEdited && <span className="ml-1 italic text-slate-400">(edited)</span>}
@@ -765,7 +761,7 @@ export default function ChatPage() {
 
                   </div>
 
-                  {isCurrentUser && renderAvatar(message.author, 'small', () => handleUserClick(message.author))}
+                  {isCurrentUser && renderAvatar(message.author, 'small', (e) => handleAvatarClick(e, message.author))}
                 </div>
               )
             })}
@@ -902,6 +898,43 @@ export default function ChatPage() {
           </div>
         </div>
       </div>
+
+      {/* Profile Modal */}
+      {profileModal && (
+        <div
+          className="fixed z-[110] bg-white rounded-xl shadow-2xl p-4 w-64 animate-in fade-in zoom-in-95 duration-200 border border-slate-100"
+          style={{ 
+            top: `${Math.min(profileModal.y + 10, typeof window !== 'undefined' ? window.innerHeight - 250 : 500)}px`, 
+            left: `${Math.min(profileModal.x + 10, typeof window !== 'undefined' ? window.innerWidth - 260 : 10)}px` 
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-center gap-3 mb-3">
+             <div className="w-12 h-12 rounded-full overflow-hidden shrink-0">
+               {profileModal.author.profileImage ? (
+                 <img src={profileModal.author.profileImage} alt={profileModal.author.firstName} className="w-full h-full object-cover" />
+               ) : (
+                 <div className="w-full h-full bg-brand-sky flex items-center justify-center font-bold text-white text-lg">
+                   {(profileModal.author.alias || profileModal.author.firstName || 'U')[0].toUpperCase()}
+                 </div>
+               )}
+             </div>
+             <div>
+                <div className="font-bold text-slate-800 text-sm">
+                  {profileModal.author.alias || profileModal.author.firstName}
+                </div>
+                <div className="text-xs text-brand-sky font-medium">
+                  {profileModal.author.position || 'Family Member'}
+                </div>
+             </div>
+          </div>
+          {profileModal.author.bio && (
+             <p className="text-xs text-slate-600 italic border-t border-slate-100 pt-2">
+                &quot;{profileModal.author.bio.substring(0, 75)}{profileModal.author.bio.length > 75 ? '...' : ''}&quot;
+             </p>
+          )}
+        </div>
+      )}
 
       {/* Media Selection Modal */}
       {isMediaModalOpen && (

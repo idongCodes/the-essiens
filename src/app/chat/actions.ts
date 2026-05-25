@@ -21,6 +21,8 @@ export async function getChatMessages(cursor?: string) {
             alias: true,
             profileImage: true,
             email: true,
+            position: true,
+            bio: true,
           }
         },
         reactions: {
@@ -88,6 +90,8 @@ export async function sendChatMessage(content: string, authorId: string, replyTo
             alias: true,
             profileImage: true,
             email: true,
+            position: true,
+            bio: true,
           }
         },
         reactions: true,
@@ -201,7 +205,7 @@ export async function editChatMessage(messageId: string, userId: string, newCont
         isEdited: true
       },
       include: {
-        author: { select: { id: true, firstName: true, lastName: true, alias: true, profileImage: true, email: true } },
+        author: { select: { id: true, firstName: true, lastName: true, alias: true, profileImage: true, email: true, position: true, bio: true } },
         reactions: true,
         replyTo: { select: { id: true, content: true, author: { select: { firstName: true, alias: true } } } }
       }
