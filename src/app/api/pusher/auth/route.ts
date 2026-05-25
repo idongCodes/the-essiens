@@ -5,14 +5,26 @@ import { prisma } from '@/lib/prisma';
 
 export async function POST(req: Request) {
   try {
-    const data = await req.json();
-    const socketId = data.socket_id;
-    const channel = data.channel_name;
+    let socketId, channel;
+    const contentType = req.headers.get('content-type');
+    
+    if (contentType?.includes('application/json')) {
+      const data = await req.json();
+      socketId = data.socket_id;
+      channel = data.channel_name;
+    } else {
+      const formData = await req.formData();
+      socketId = formData.get('socket_id') as string;
+      channel = formData.get('channel_name') as string;
+    }
 
     const cookieStore = await cookies();
     const userId = cookieStore.get('session_id')?.value;
 
+    console.log('Pusher Auth - User ID from cookie:', userId);
+
     if (!userId) {
+      console.log('Pusher Auth - No session_id cookie found');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

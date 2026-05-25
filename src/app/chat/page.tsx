@@ -3,15 +3,17 @@
 import EmojiButton from '@/components/EmojiButton'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { ArrowUturnLeftIcon, PhotoIcon, XMarkIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline'
-import { getChatMessages, sendChatMessage, toggleReaction, editChatMessage, deleteChatMessage } from '@/app/chat/actions'
+import { ArrowUturnLeftIcon, PhotoIcon, XMarkIcon, PencilIcon, TrashIcon, InformationCircleIcon } from '@heroicons/react/24/outline'
+import { getChatMessages, sendChatMessage, toggleReaction, editChatMessage, deleteChatMessage, getChatMedia } from '@/app/chat/actions'
 import { pusherClient } from '@/lib/pusherClient'
 import { getUploadSignature } from '@/app/actions/cloudinary'
 import { useToast } from '@/context/ToastContext'
+import { useConfirm } from '@/context/ConfirmContext'
 
 export default function ChatPage() {
   const router = useRouter()
   const toast = useToast()
+  const { confirm } = useConfirm()
   const [joinMessage, setJoinMessage] = useState<string | null>(null)
   const [messages, setMessages] = useState<any[]>([])
   const [inputMessage, setInputMessage] = useState('')
@@ -34,6 +36,8 @@ export default function ChatPage() {
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false)
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null)
   const [profileModal, setProfileModal] = useState<{ author: any, x: number, y: number } | null>(null)
+  const [isInfoModalOpen, setIsInfoModalOpen] = useState(false)
+  const [chatMedia, setChatMedia] = useState<any[]>([])
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const topRef = useRef<HTMLDivElement>(null)
@@ -48,6 +52,19 @@ export default function ChatPage() {
 
   // Available reactions
   const REACTION_EMOJIS = ['❤️', '👍', '😂', '😮', '😢']
+
+  const fetchChatMedia = async () => {
+    const result = await getChatMedia()
+    if (result.success && result.media) {
+      setChatMedia(result.media)
+    }
+  }
+
+  useEffect(() => {
+    if (isInfoModalOpen) {
+      fetchChatMedia()
+    }
+  }, [isInfoModalOpen])
 
   const fetchCurrentUser = useCallback(async (userId: string) => {
     try {
@@ -140,7 +157,7 @@ export default function ChatPage() {
     }
     
     const sessionId = getSessionId()
-    const userId = sessionId || 'test-user-id'
+    const userId = sessionId
     setCurrentUserId(userId)
     
     if (userId) {
@@ -150,8 +167,9 @@ export default function ChatPage() {
 
   // Pusher Subscription
   useEffect(() => {
-    if (!currentUserId || !pusherClient) return
+    if (!currentUserId || currentUserId === 'test-user-id' || !pusherClient) return
 
+    console.log('Subscribing to presence-chat with user:', currentUserId);
     const channel = pusherClient.subscribe('presence-chat')
     channelRef.current = channel
 
@@ -277,16 +295,23 @@ export default function ChatPage() {
   }
 
   const handleDeleteMessage = async (messageId: string) => {
-    if (!currentUserId || !confirm("Are you sure you want to delete this message?")) return;
+    if (!currentUserId) return;
     
-    setMessages(prev => prev.filter(m => m.id !== messageId));
-    try {
-      const result = await deleteChatMessage(messageId, currentUserId);
-      if (!result.success) {
-         toast.error(result.message || "Failed to delete message");
+    if (await confirm({
+      title: 'Delete Message',
+      message: 'Are you sure you want to delete this message? This action cannot be undone.',
+      confirmText: 'Delete',
+      type: 'danger'
+    })) {
+      setMessages(prev => prev.filter(m => m.id !== messageId));
+      try {
+        const result = await deleteChatMessage(messageId, currentUserId);
+        if (!result.success) {
+           toast.error(result.message || "Failed to delete message");
+        }
+      } catch(err) {
+        console.error(err);
       }
-    } catch(err) {
-      console.error(err);
     }
   }
 
@@ -590,6 +615,12 @@ export default function ChatPage() {
               {onlineUsers.length} Online
             </span>
           </div>
+          <button 
+            onClick={() => setIsInfoModalOpen(true)}
+            className="p-1.5 hover:bg-white/10 rounded-full transition-colors"
+          >
+            <InformationCircleIcon className="w-6 h-6" />
+          </button>
         </div>
         
         {/* Chat Messages Area */}
@@ -732,36 +763,47 @@ export default function ChatPage() {
                              Reply
                           </button>
                           
-                          {isCurrentUser && (Date.now() - new Date(message.createdAt).getTime() <= 15 * 60 * 1000) && !message.id.startsWith('temp-') && (
-                            <>
-                              {!message.isEdited && (
-                                <button
-                                  onClick={(e) => {
-                                      e.stopPropagation()
-                                      setEditingMessageId(message.id)
-                                      setInputMessage(message.content || '')
-                                      setSelectedMessageId(null)
-                                      inputRef.current?.focus()
-                                  }}
-                                  className="flex items-center gap-2 text-xs font-bold text-slate-500 hover:bg-slate-50 p-2 rounded-lg w-full"
-                                >
-                                  <PencilIcon className="w-4 h-4" />
-                                  Edit
-                                </button>
-                              )}
-                              <button
-                                onClick={(e) => {
-                                    e.stopPropagation()
-                                    handleDeleteMessage(message.id)
-                                    setSelectedMessageId(null)
-                                }}
-                                className="flex items-center gap-2 text-xs font-bold text-red-500 hover:bg-red-50 p-2 rounded-lg w-full"
-                              >
-                                <TrashIcon className="w-4 h-4" />
-                                Delete
-                              </button>
-                            </>
-                          )}
+                          {/* Delete and Edit Logic */}
+                          {(() => {
+                            const isAdmin = currentUser?.isAdmin === true
+                            const isAuthor = message.author.id === currentUserId
+                            const isWithinTimeLimit = (Date.now() - new Date(message.createdAt).getTime() <= 15 * 60 * 1000)
+                            const isTemp = message.id.startsWith('temp-')
+
+                            return (
+                              <div className="flex flex-col gap-2 w-full">
+                                {isAuthor && isWithinTimeLimit && !isTemp && !message.isEdited && (
+                                  <button
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        setEditingMessageId(message.id)
+                                        setInputMessage(message.content || '')
+                                        setSelectedMessageId(null)
+                                        inputRef.current?.focus()
+                                    }}
+                                    className="flex items-center gap-2 text-xs font-bold text-slate-500 hover:bg-slate-50 p-2 rounded-lg w-full transition-colors"
+                                  >
+                                    <PencilIcon className="w-4 h-4" />
+                                    Edit
+                                  </button>
+                                )}
+                                
+                                {(isAdmin || (isAuthor && isWithinTimeLimit)) && !isTemp && (
+                                  <button
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        handleDeleteMessage(message.id)
+                                        setSelectedMessageId(null)
+                                    }}
+                                    className="flex items-center gap-2 text-xs font-bold text-red-500 hover:bg-red-50 p-2 rounded-lg w-full transition-colors"
+                                  >
+                                    <TrashIcon className="w-4 h-4" />
+                                    Delete
+                                  </button>
+                                )}
+                              </div>
+                            )
+                          })()}
                         </div>
                       )}
 
@@ -992,6 +1034,98 @@ export default function ChatPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
               </svg>
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Chat Info Modal */}
+      {isInfoModalOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-[120] flex items-center justify-center p-4 backdrop-blur-sm"
+          onClick={() => setIsInfoModalOpen(false)}
+        >
+          <div 
+            className="bg-white rounded-3xl w-full max-w-md max-h-[80vh] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+              <h3 className="font-bold text-slate-700">Chat Info</h3>
+              <button 
+                onClick={() => setIsInfoModalOpen(false)} 
+                className="text-slate-400 hover:text-slate-600 bg-white p-1 rounded-full shadow-sm"
+              >
+                <XMarkIcon className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-6 space-y-8">
+              {/* 1. Active Users Summary */}
+              <section>
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Active Users</h4>
+                  <span className="bg-brand-sky/10 text-brand-sky text-[10px] font-bold px-2 py-0.5 rounded-full">
+                    {onlineUsers.length} Online
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  {onlineUsers.map((user, idx) => (
+                    <div key={user.user_id || idx} className="flex flex-col items-center gap-1 w-14">
+                      <div className="relative">
+                        <div className="w-10 h-10 rounded-full bg-brand-sky flex items-center justify-center text-white font-bold border-2 border-white shadow-sm overflow-hidden">
+                          {user.profileImage ? (
+                            <img src={user.profileImage} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <span>{(user.name || '?')[0].toUpperCase()}</span>
+                          )}
+                        </div>
+                        <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white"></div>
+                      </div>
+                      <span className="text-[10px] text-slate-600 font-medium truncate w-full text-center">
+                        {user.name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* 2. Media Gallery */}
+              <section>
+                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Shared Media</h4>
+                {chatMedia.length > 0 ? (
+                  <div className="grid grid-cols-3 gap-2">
+                    {chatMedia.map((m) => (
+                      <div key={m.id} className="aspect-square rounded-lg overflow-hidden bg-slate-100 border border-slate-200 group relative">
+                        {m.imageUrl ? (
+                          <img 
+                            src={m.imageUrl} 
+                            alt="" 
+                            className="w-full h-full object-cover cursor-pointer hover:scale-110 transition-transform" 
+                            onClick={() => window.open(m.imageUrl, '_blank')}
+                          />
+                        ) : (
+                          <div 
+                            className="w-full h-full flex items-center justify-center cursor-pointer group"
+                            onClick={() => window.open(m.videoUrl, '_blank')}
+                          >
+                            <video src={m.videoUrl} className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">
+                              <div className="w-8 h-8 bg-white/80 rounded-full flex items-center justify-center">
+                                <div className="w-0 h-0 border-t-[5px] border-t-transparent border-l-[8px] border-l-brand-sky border-b-[5px] border-b-transparent ml-0.5" />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="bg-slate-50 rounded-2xl p-8 text-center border border-dashed border-slate-200">
+                    <PhotoIcon className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                    <p className="text-xs text-slate-400 italic">No media shared yet</p>
+                  </div>
+                )}
+              </section>
+            </div>
           </div>
         </div>
       )}

@@ -16,7 +16,9 @@ export async function GET(
         firstName: true,
         lastName: true,
         alias: true,
-        profileImage: true
+        profileImage: true,
+        email: true,
+        isAdmin: true
       }
     })
 
