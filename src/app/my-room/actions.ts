@@ -13,6 +13,20 @@ export async function updateProfilePhoto(formData: FormData) {
 
   if (!userId) return { success: false, message: "Unauthorized" }
 
+  const user = await prisma.user.findUnique({ where: { id: userId } })
+  if (!user) return { success: false, message: "User not found" }
+
+  const isAdmin = user.isAdmin || user.email === 'idongesit_essien@ymail.com'
+  
+  // Check 24 hour limit for non-admins
+  if (!isAdmin && user.lastProfileUpdate) {
+    const hoursSinceLastUpdate = (Date.now() - new Date(user.lastProfileUpdate).getTime()) / (1000 * 60 * 60)
+    if (hoursSinceLastUpdate < 24) {
+      const remainingHours = Math.ceil(24 - hoursSinceLastUpdate)
+      return { success: false, message: `You can only update your profile once every 24 hours. Please wait ${remainingHours} more hours.` }
+    }
+  }
+
   const imageUrl = formData.get('imageUrl') as string | null
 
   if (!imageUrl) {
@@ -22,7 +36,10 @@ export async function updateProfilePhoto(formData: FormData) {
   try {
     await prisma.user.update({
       where: { id: userId },
-      data: { profileImage: imageUrl }
+      data: { 
+        profileImage: imageUrl,
+        lastProfileUpdate: new Date()
+      }
     })
 
     revalidatePath('/my-room')
@@ -44,6 +61,20 @@ export async function updateProfileDetails(formData: FormData) {
   const userId = cookieStore.get('session_id')?.value
 
   if (!userId) return { success: false, message: "Unauthorized" }
+
+  const user = await prisma.user.findUnique({ where: { id: userId } })
+  if (!user) return { success: false, message: "User not found" }
+
+  const isAdmin = user.isAdmin || user.email === 'idongesit_essien@ymail.com'
+  
+  // Check 24 hour limit for non-admins
+  if (!isAdmin && user.lastProfileUpdate) {
+    const hoursSinceLastUpdate = (Date.now() - new Date(user.lastProfileUpdate).getTime()) / (1000 * 60 * 60)
+    if (hoursSinceLastUpdate < 24) {
+      const remainingHours = Math.ceil(24 - hoursSinceLastUpdate)
+      return { success: false, message: `You can only update your profile once every 24 hours. Please wait ${remainingHours} more hours.` }
+    }
+  }
 
   const bio = formData.get('bio') as string
   const location = formData.get('location') as string
@@ -67,7 +98,8 @@ export async function updateProfileDetails(formData: FormData) {
         firstName,
         lastName,
         position,
-        status // <--- Save Status
+        status,
+        lastProfileUpdate: new Date()
       }
     })
 

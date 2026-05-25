@@ -13,6 +13,7 @@ export default function Navbar() {
   const pathname = usePathname()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   // Prevent scrolling when menu is open
   useEffect(() => {
@@ -31,6 +32,20 @@ export default function Navbar() {
         setUnreadCount(count)
       }
       fetchCount()
+
+      // Fetch admin status
+      const getSessionId = () => {
+        const cookies = document.cookie.split('; ')
+        const cookie = cookies.find(row => row.startsWith('user_session='))
+        return cookie ? cookie.split('=')[1] : null
+      }
+      const userId = getSessionId()
+      if (userId) {
+        fetch(`/api/user/${userId}`)
+          .then(res => res.json())
+          .then(data => setIsAdmin(data.isAdmin === true))
+          .catch(err => console.error('Error fetching user for navbar:', err))
+      }
       
       const interval = setInterval(fetchCount, 10000)
       return () => clearInterval(interval)
@@ -102,6 +117,11 @@ export default function Navbar() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>
         ),
+        subItems: [
+          { name: 'Activity', href: '/my-room?tab=activity' },
+          { name: 'Settings', href: '/my-room?tab=settings' },
+          { name: 'Admin', href: '/my-room?tab=admin', adminOnly: true }
+        ]
       },
       {
         name: 'Chat',
@@ -188,34 +208,61 @@ export default function Navbar() {
         <div className="flex-1 overflow-y-auto py-4 px-3 flex flex-col gap-2">
           {navItems.map((item) => {
             const active = isActive(item.href)
-            if ('isButton' in item && item.isButton) {
-              return (
-                <button
-                  key={item.name}
-                  onClick={'onClick' in item ? (item.onClick as any) : undefined}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-left w-full
-                    ${active ? 'bg-white/20 text-white font-semibold' : 'text-white/90 hover:bg-white/10 hover:text-white'}
-                  `}
-                >
-                  <div className={active ? 'text-white' : ''}>{item.icon}</div>
-                  <span>{item.name}</span>
-                </button>
-              )
-            } else {
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  onClick={closeMenu}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors
-                    ${active ? 'bg-white/20 text-white font-semibold' : 'text-white/90 hover:bg-white/10 hover:text-white'}
-                  `}
-                >
-                  <div className={active ? 'text-white' : ''}>{item.icon}</div>
-                  <span>{item.name}</span>
-                </Link>
-              )
-            }
+            const showSubItems = 'subItems' in item && item.subItems
+
+            return (
+              <div key={item.name} className="flex flex-col gap-1">
+                {('isButton' in item && item.isButton) ? (
+                  <button
+                    onClick={'onClick' in item ? (item.onClick as any) : undefined}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors text-left w-full
+                      ${active ? 'bg-white/20 text-white font-semibold' : 'text-white/90 hover:bg-white/10 hover:text-white'}
+                    `}
+                  >
+                    <div className={active ? 'text-white' : ''}>{item.icon}</div>
+                    <span>{item.name}</span>
+                  </button>
+                ) : (
+                  <Link
+                    href={item.href}
+                    onClick={closeMenu}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors
+                      ${active ? 'bg-white/20 text-white font-semibold' : 'text-white/90 hover:bg-white/10 hover:text-white'}
+                    `}
+                  >
+                    <div className={active ? 'text-white' : ''}>{item.icon}</div>
+                    <span>{item.name}</span>
+                  </Link>
+                )}
+
+                {/* Render Sub Items if they exist */}
+                {showSubItems && (
+                  <div className="flex flex-col gap-1 ml-11 mt-1 mb-2">
+                    {item.subItems.map((sub: any) => {
+                      if (sub.adminOnly && !isAdmin) return null
+                      const subActive = pathname === sub.href || pathname.startsWith(`${sub.href.split('?')[0]}?`) && pathname.includes(sub.href.split('?')[1])
+                      // Simpler active check for sub items
+                      const isSubActive = pathname + (window.location.search || '') === sub.href
+                      
+                      return (
+                        <Link
+                          key={sub.name}
+                          href={sub.href}
+                          onClick={closeMenu}
+                          className={`text-sm py-2 px-3 rounded-lg transition-colors ${
+                            pathname === sub.href.split('?')[0] && (typeof window !== 'undefined' && window.location.search === '?' + sub.href.split('?')[1])
+                              ? 'bg-white/20 text-white font-bold'
+                              : 'text-white/70 hover:text-white hover:bg-white/10'
+                          }`}
+                        >
+                          {sub.name}
+                        </Link>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )
           })}
         </div>
 
