@@ -180,3 +180,61 @@ export async function toggleReaction(messageId: string, userId: string, emoji: s
     return { success: false, message: 'Failed to toggle reaction' }
   }
 }
+
+export async function editChatMessage(messageId: string, userId: string, newContent: string) {
+  try {
+    const message = await prisma.chatMessage.findUnique({ where: { id: messageId } })
+    if (!message) return { success: false, message: 'Message not found' }
+    if (message.authorId !== userId) return { success: false, message: 'Unauthorized' }
+    if (message.isEdited) return { success: false, message: 'Message already edited once' }
+    
+    // Check 15 minutes limit
+    const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000)
+    if (message.createdAt < fifteenMinutesAgo) {
+      return { success: false, message: 'Message can only be edited within 15 minutes of sending' }
+    }
+
+    const updatedMessage = await prisma.chatMessage.update({
+      where: { id: messageId },
+      data: {
+        content: newContent.trim(),
+        isEdited: true
+      },
+      include: {
+        author: { select: { id: true, firstName: true, lastName: true, alias: true, profileImage: true, email: true } },
+        reactions: true,
+        replyTo: { select: { id: true, content: true, author: { select: { firstName: true, alias: true } } } }
+      }
+    })
+
+    await pusherServer.trigger('presence-chat', 'message-edited', updatedMessage)
+    revalidatePath('/chat')
+    return { success: true, message: updatedMessage }
+  } catch (error: any) {
+    console.error('Error editing chat message:', error)
+    return { success: false, message: `Failed to edit message: ${error?.message || 'Unknown'}` }
+  }
+}
+
+export async function deleteChatMessage(messageId: string, userId: string) {
+  try {
+    const message = await prisma.chatMessage.findUnique({ where: { id: messageId } })
+    if (!message) return { success: false, message: 'Message not found' }
+    if (message.authorId !== userId) return { success: false, message: 'Unauthorized' }
+
+    // Check 15 minutes limit
+    const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000)
+    if (message.createdAt < fifteenMinutesAgo) {
+      return { success: false, message: 'Message can only be deleted within 15 minutes of sending' }
+    }
+
+    await prisma.chatMessage.delete({ where: { id: messageId } })
+
+    await pusherServer.trigger('presence-chat', 'message-deleted', { messageId })
+    revalidatePath('/chat')
+    return { success: true }
+  } catch (error) {
+    console.error('Error deleting chat message:', error)
+    return { success: false, message: 'Failed to delete message' }
+  }
+}

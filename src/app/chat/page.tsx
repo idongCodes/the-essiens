@@ -3,8 +3,8 @@
 import EmojiButton from '@/components/EmojiButton'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { ArrowUturnLeftIcon, PhotoIcon, XMarkIcon } from '@heroicons/react/24/outline'
-import { getChatMessages, sendChatMessage, toggleReaction } from '@/app/chat/actions'
+import { ArrowUturnLeftIcon, PhotoIcon, XMarkIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline'
+import { getChatMessages, sendChatMessage, toggleReaction, editChatMessage, deleteChatMessage } from '@/app/chat/actions'
 import { pusherClient } from '@/lib/pusherClient'
 import { getUploadSignature } from '@/app/actions/cloudinary'
 import { useToast } from '@/context/ToastContext'
@@ -31,6 +31,7 @@ export default function ChatPage() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [isSending, setIsSending] = useState(false)
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false)
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null)
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const topRef = useRef<HTMLDivElement>(null)
@@ -197,6 +198,14 @@ export default function ChatPage() {
       }))
     })
 
+    channel.bind('message-edited', (updatedMessage: any) => {
+      setMessages(prev => prev.map(msg => msg.id === updatedMessage.id ? updatedMessage : msg))
+    })
+
+    channel.bind('message-deleted', (data: { messageId: string }) => {
+      setMessages(prev => prev.filter(msg => msg.id !== data.messageId))
+    })
+
     channel.bind('client-typing', (data: { userId: string, name: string }) => {
       setTypingUsers(prev => ({ ...prev, [data.userId]: data.name }))
       setTimeout(() => {
@@ -261,11 +270,54 @@ export default function ChatPage() {
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
+  const handleDeleteMessage = async (messageId: string) => {
+    if (!currentUserId || !confirm("Are you sure you want to delete this message?")) return;
+    
+    setMessages(prev => prev.filter(m => m.id !== messageId));
+    try {
+      const result = await deleteChatMessage(messageId, currentUserId);
+      if (!result.success) {
+         toast.error(result.message || "Failed to delete message");
+      }
+    } catch(err) {
+      console.error(err);
+    }
+  }
+
   const handleSendMessage = async () => {
     if ((inputMessage.trim() || mediaFile) && currentUserId) {
       setIsSending(true)
-      const tempId = 'temp-' + Date.now()
       const messageContent = inputMessage.trim()
+      
+      if (editingMessageId) {
+        // Handle Edit
+        const targetId = editingMessageId
+        const previousMessage = messages.find(m => m.id === targetId)
+        const previousContent = previousMessage?.content
+        
+        setMessages(prev => prev.map(m => m.id === targetId ? { ...m, content: messageContent, isEdited: true } : m))
+        setInputMessage('')
+        setEditingMessageId(null)
+        
+        try {
+           const result = await editChatMessage(targetId, currentUserId, messageContent)
+           if (!result.success) {
+              toast.error(typeof result.message === 'string' ? result.message : "Failed to edit message");
+              // Revert
+              setMessages(prev => prev.map(m => m.id === targetId ? { ...m, content: previousContent, isEdited: previousMessage?.isEdited || false } : m))
+           }
+        } catch(e: any) {
+           console.error(e)
+           // Revert
+           setMessages(prev => prev.map(m => m.id === targetId ? { ...m, content: previousContent, isEdited: previousMessage?.isEdited || false } : m))
+           toast.error(e?.message || "An unexpected error occurred while editing");
+        } finally {
+           setIsSending(false)
+        }
+        return;
+      }
+
+      const tempId = 'temp-' + Date.now()
       
       let uploadedImageUrl = ''
       let uploadedVideoUrl = ''
@@ -355,6 +407,9 @@ export default function ChatPage() {
           setMessages(prev => prev.filter(m => m.id !== tempId))
           setInputMessage(messageContent) 
           alert("Failed to send message. Please try again.")
+        } else {
+          // Replace temp message with actual message from server
+          setMessages(prev => prev.map(m => m.id === tempId ? result.message : m))
         }
       } catch (error) {
         console.error('Error sending message:', error)
@@ -627,6 +682,37 @@ export default function ChatPage() {
                              <ArrowUturnLeftIcon className="w-4 h-4" />
                              Reply
                           </button>
+                          
+                          {isCurrentUser && (Date.now() - new Date(message.createdAt).getTime() <= 15 * 60 * 1000) && !message.id.startsWith('temp-') && (
+                            <>
+                              {!message.isEdited && (
+                                <button
+                                  onClick={(e) => {
+                                      e.stopPropagation()
+                                      setEditingMessageId(message.id)
+                                      setInputMessage(message.content || '')
+                                      setSelectedMessageId(null)
+                                      inputRef.current?.focus()
+                                  }}
+                                  className="flex items-center gap-2 text-xs font-bold text-slate-500 hover:bg-slate-50 p-2 rounded-lg w-full"
+                                >
+                                  <PencilIcon className="w-4 h-4" />
+                                  Edit
+                                </button>
+                              )}
+                              <button
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleDeleteMessage(message.id)
+                                    setSelectedMessageId(null)
+                                }}
+                                className="flex items-center gap-2 text-xs font-bold text-red-500 hover:bg-red-50 p-2 rounded-lg w-full"
+                              >
+                                <TrashIcon className="w-4 h-4" />
+                                Delete
+                              </button>
+                            </>
+                          )}
                         </div>
                       )}
                     </div>
@@ -647,7 +733,10 @@ export default function ChatPage() {
                              </span>
                           )}
                           <span className={`text-xs ${isCurrentUser ? 'text-slate-300' : 'text-slate-300'}`}>•</span>
-                          <p className={`text-[10px] ${isCurrentUser ? 'text-slate-400' : 'text-slate-400'}`}>{formatTime(message.createdAt)}</p>
+                          <p className={`text-[10px] ${isCurrentUser ? 'text-slate-400' : 'text-slate-400'}`}>
+                            {formatTime(message.createdAt)}
+                            {message.isEdited && <span className="ml-1 italic text-slate-400">(edited)</span>}
+                          </p>
                       </div>
 
                       {/* Display Reactions */}
@@ -724,6 +813,19 @@ export default function ChatPage() {
                    <span className="text-slate-500 truncate max-w-xs">{replyingTo.content}</span>
                 </div>
                 <button onClick={() => setReplyingTo(null)} className="p-1 hover:bg-slate-200 rounded-full">
+                   <XMarkIcon className="w-4 h-4 text-slate-500" />
+                </button>
+             </div>
+          )}
+
+          {/* Editing Indicator */}
+          {editingMessageId && (
+             <div className="flex items-center justify-between bg-amber-50 p-2 rounded-lg mb-2 text-xs border-l-4 border-amber-400">
+                <div className="flex flex-col">
+                   <span className="font-bold text-amber-600">Editing Message</span>
+                   <span className="text-slate-500 truncate max-w-xs">{messages.find(m => m.id === editingMessageId)?.content}</span>
+                </div>
+                <button onClick={() => { setEditingMessageId(null); setInputMessage(''); }} className="p-1 hover:bg-amber-200 rounded-full">
                    <XMarkIcon className="w-4 h-4 text-slate-500" />
                 </button>
              </div>

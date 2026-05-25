@@ -136,6 +136,7 @@ model ChatMessage {
   imageUrl  String?
   videoUrl  String?
   createdAt DateTime          @default(now())
+  isEdited  Boolean           @default(false)
   authorId  String
   author    User              @relation("UserChatMessages", fields: [authorId], references: [id])
   reactions MessageReaction[]
