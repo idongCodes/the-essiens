@@ -440,7 +440,8 @@ export default function ChatPage() {
           firstName: currentUser?.firstName || 'Me',
           lastName: currentUser?.lastName || '',
           alias: currentUser?.alias,
-          profileImage: currentUser?.profileImage
+          profileImage: currentUser?.profileImage,
+          status: currentUser?.status
         },
         createdAt: new Date(),
         reactions: [],
@@ -1095,6 +1096,11 @@ export default function ChatPage() {
                 <div className="text-xs text-brand-sky font-medium">
                   {profileModal.author.position || 'Family Member'}
                 </div>
+                {profileModal.author.status && (
+                  <div className="text-[10px] text-slate-500 italic mt-0.5 truncate max-w-[150px]">
+                    💭 {profileModal.author.status.substring(0, 30)}{profileModal.author.status.length > 30 ? '...' : ''}
+                  </div>
+                )}
              </div>
           </div>
           {profileModal.author.bio && (

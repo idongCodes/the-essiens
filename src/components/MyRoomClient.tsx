@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, Suspense } from 'react'
 import { updateProfilePhoto, updateProfileDetails, getUserActivity, adminAddUser, adminUpdateUser } from '@/app/my-room/actions'
 import { deleteUser } from '@/app/family/actions'
 import { getUploadSignature } from '@/app/actions/cloudinary'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link' // <--- 1. Import Link
 import EmojiButton from './EmojiButton'
 import StatusBadge from './StatusBadge'
@@ -12,10 +12,18 @@ import FamilyPositionIcon from './FamilyPositionIcon'
 import { compressImage } from '@/lib/imageUtils'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 
-export default function MyRoomClient({ user, allUsers = [] }: { user: any, allUsers?: any[] }) {
+function MyRoomContent({ user, allUsers = [] }: { user: any, allUsers?: any[] }) {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState('dashboard')
+  const searchParams = useSearchParams()
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'activity')
   const { subscribe, isSubscribed, permission } = usePushNotifications()
+
+  // Sync tab with URL
+  useEffect(() => {
+    const tab = searchParams.get('tab')
+    if (tab) setActiveTab(tab)
+    else setActiveTab('activity')
+  }, [searchParams])
 
   // --- ACTIVITY STATE ---
   const [activityData, setActivityData] = useState<any>(null)
@@ -244,249 +252,1035 @@ export default function MyRoomClient({ user, allUsers = [] }: { user: any, allUs
 
   // Calculate the profile slug based on SAVED user data (to ensure link works)
   const profileSlug = (user.alias || user.firstName).trim()
+  const activeTabInUrl = searchParams.get('tab')
+  const isDefaultView = !activeTabInUrl
+
+  const timeSinceUpdate = user.lastProfileUpdate ? (Date.now() - new Date(user.lastProfileUpdate).getTime()) / (1000 * 60 * 60) : 25
+  const canEdit = isAdmin || timeSinceUpdate >= 24
 
   return (
-    <div className="max-w-4xl mx-auto mt-8">
-      <h1 className="text-3xl font-bold text-brand-sky mb-8 text-center md:text-left">
-        My Room
-      </h1>
-
+    <div className="max-w-4xl mx-auto mt-8 px-[2.5%] md:px-0">
       {/* Notification Banner (if not subscribed) */}
-      {!isSubscribed && permission !== 'denied' && (
-        <div className="bg-brand-sky/10 border-l-4 border-brand-sky p-4 mb-6 rounded-r-lg flex items-center justify-between">
-          <div>
-            <p className="font-bold text-brand-sky text-sm">Stay in the loop!</p>
-            <p className="text-xs text-slate-600">Enable notifications to know when family posts.</p>
-          </div>
-          <button 
-            onClick={subscribe}
-            className="bg-brand-sky text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-sky-500 transition-colors"
-          >
-            Enable Notifications
-          </button>
-        </div>
-      )}
 
-      <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 animate-fade-in">
-          {/* Mirror Frame Header */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-brand-sky/20 to-brand-sky/20 rounded-full flex items-center justify-center">
-                <span className="text-2xl">🪞</span>
-              </div>
-              <h2 className="text-2xl font-bold text-slate-800">My Mirror</h2>
-            </div>
-            <p className="text-slate-500 text-sm">How others see you in the family</p>
-          </div>
+          {!isSubscribed && permission !== 'denied' && (
 
-          {/* Mirror Content - Visitor's Perspective */}
-          <div className="max-w-2xl mx-auto">
-            {/* Profile Card as seen by others */}
-            <div className="bg-gradient-to-br from-brand-sky/5 to-brand-sky/5 p-8 rounded-2xl border border-brand-sky/10 mb-6">
-              <div className="flex items-center gap-6 mb-6">
-                {/* Avatar */}
-                <div className="relative">
-                  <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-white shadow-lg bg-slate-100 flex items-center justify-center">
-                    {previewUrl ? (
-                      <img src={previewUrl} alt="Profile" className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-3xl text-brand-sky font-bold">
-                        {(alias || firstName)?.[0]?.toUpperCase()}
-                      </span>
-                    )}
-                  </div>
-                  <StatusBadge status={status} size="normal" />
-                </div>
+            <div className="bg-brand-sky/10 border-l-4 border-brand-sky p-4 mb-6 rounded-r-lg flex items-center justify-between">
 
-                {/* Basic Info */}
-                <div className="flex-1">
-                  <h3 className="text-2xl font-bold text-slate-800">
-                    {firstName} {lastName}
-                  </h3>
-                  {alias && (
-                    <p className="text-brand-sky font-medium">@{alias}</p>
-                  )}
-                  <div className="mt-2">
-                    <FamilyPositionIcon position={position} size="medium" />
-                  </div>
-                </div>
+              <div>
+
+                <p className="font-bold text-brand-sky text-sm">Stay in the loop!</p>
+
+                <p className="text-xs text-slate-600">Enable notifications to know when family posts.</p>
+
               </div>
 
-              {/* Location */}
-              {location && (
-                <div className="flex items-center gap-2 text-slate-600 mb-4">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-brand-sky">
-                    <path fillRule="evenodd" d="m9.69 18.933.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 0 0 .281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 1 0 3 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 0 0 2.273 1.765 11.842 11.842 0 0 0 .976.544l.062.029.018.008.006.003ZM10 11.25a2.25 2.25 0 1 0 0-4.5 2.25 2.25 0 0 0 0 4.5Z" clipRule="evenodd" />
-                  </svg>
-                  <span className="text-sm font-medium">{location}</span>
-                </div>
-              )}
+              <button 
 
-              {/* Status */}
-              {status && (
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 mb-4">
-                  <div className="flex items-center gap-2 text-slate-600">
-                    <span className="text-lg">💭</span>
-                    <span className="font-medium italic">"{status}"</span>
-                  </div>
-                </div>
-              )}
+                onClick={subscribe}
 
-              {/* Bio */}
-              {bio && (
-                <div className="bg-white p-6 rounded-xl border border-slate-100 mb-4">
-                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">About Me</h4>
-                  <p className="text-slate-700 leading-relaxed">{bio}</p>
-                </div>
-              )}
+                className="bg-brand-sky text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-sky-500 transition-colors"
 
-              {/* Contact Information */}
-              <div className="bg-white p-6 rounded-xl border border-slate-100">
-                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Contact Information</h4>
-                <div className="space-y-3">
-                  {/* Email */}
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-brand-sky/10 rounded-full flex items-center justify-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-brand-sky">
-                        <path d="M3 4a2 2 0 0 0-2 2v1.161l8.441 4.221a1.25 1.25 0 0 0 1.118 0L19 7.162V6a2 2 0 0 0-2-2H3Z" />
-                        <path d="m19 8.839-7.77 3.885a2.75 2.75 0 0 1-2.46 0L1 8.839V14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.839Z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <div className="text-xs text-slate-400 uppercase tracking-wider">Email</div>
-                      <div className="text-slate-700 font-medium">{user.email}</div>
-                    </div>
-                  </div>
+              >
 
-                  {/* Phone */}
-                  {user.phone && (
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-brand-sky/10 rounded-full flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-brand-sky">
-                          <path fillRule="evenodd" d="M2 3.5A1.5 1.5 0 0 1 3.5 2h1.148a1.5 1.5 0 0 1 1.465 1.175l.716 3.223a1.5 1.5 0 0 1-1.052 1.767l-.933.267c-.41.117-.643.555-.48.95a11.542 11.542 0 0 0 6.254 6.254c.395.163.833-.07.95-.48l.267-.933a1.5 1.5 0 0 1 1.767-1.052l3.223.716A1.5 1.5 0 0 1 18 15.352V16.5a1.5 1.5 0 0 1-1.5 1.5H15c-1.149 0-2.263-.15-3.326-.43A13.022 13.022 0 0 1 2.43 8.326 13.019 13.019 0 0 1 2 5V3.5Z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                      <div>
-                        <div className="text-xs text-slate-400 uppercase tracking-wider">Phone</div>
-                        <div className="text-slate-700 font-medium">{user.phone}</div>
-                      </div>
-                    </div>
-                  )}
+                Enable Notifications
 
-                  {!user.phone && (
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-slate-400">
-                          <path fillRule="evenodd" d="M2 3.5A1.5 1.5 0 0 1 3.5 2h1.148a1.5 1.5 0 0 1 1.465 1.175l.716 3.223a1.5 1.5 0 0 1-1.052 1.767l-.933.267c-.41.117-.643.555-.48.95a11.542 11.542 0 0 0 6.254 6.254c.395.163.833-.07.95-.48l.267-.933a1.5 1.5 0 0 1 1.767-1.052l3.223.716A1.5 1.5 0 0 1 18 15.352V16.5a1.5 1.5 0 0 1-1.5 1.5H15c-1.149 0-2.263-.15-3.326-.43A13.022 13.022 0 0 1 2.43 8.326 13.019 13.019 0 0 1 2 5V3.5Z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                      <div>
-                        <div className="text-xs text-slate-400 uppercase tracking-wider">Phone</div>
-                        <div className="text-slate-400 italic">Not provided</div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
+              </button>
+
             </div>
 
-            {/* Family Connection Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <div className="bg-brand-sky/10 p-4 rounded-xl text-center border border-brand-sky/20">
-                <div className="text-2xl font-bold text-brand-sky">👨‍👩‍👧‍👦</div>
-                <div className="text-xs text-slate-600 mt-1">Family Member</div>
-              </div>
-              <div className="bg-brand-sky/10 p-4 rounded-xl text-center border border-brand-sky/20">
-                <div className="text-2xl font-bold text-brand-sky">📅</div>
-                <div className="text-xs text-slate-600 mt-1">
-                  Joined {new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-                </div>
-              </div>
-              <div className="bg-white/20 p-4 rounded-xl text-center border border-white/30">
-                <div className="text-2xl font-bold text-white/80">✨</div>
-                <div className="text-xs text-slate-600 mt-1">Active</div>
-              </div>
-              <div className="bg-white/30 p-4 rounded-xl text-center border border-white/50">
-                <div className="text-2xl font-bold text-white/70">🏠</div>
-                <div className="text-xs text-slate-600 mt-1">Common Room</div>
-              </div>
-            </div>
+          )}
 
-            {/* Visitor's Perspective Message */}
-            <div className="bg-gradient-to-r from-brand-sky/10 to-brand-sky/10 p-6 rounded-2xl border border-brand-sky/20 text-center">
-              <div className="text-3xl mb-3">👁️</div>
-              <h4 className="text-lg font-bold text-slate-800 mb-2">Through Family Eyes</h4>
-              <p className="text-slate-600 text-sm leading-relaxed max-w-md mx-auto">
-                This is how your family sees you when they visit your profile. Your presence, your story, your connection to the family - all reflected back through the mirror of our shared space.
-              </p>
-              <div className="mt-4 flex justify-center gap-3">
-                <Link 
-                  href={`/${profileSlug}s-room`}
-                  className="bg-brand-sky text-white px-4 py-2 rounded-full text-sm font-bold hover:bg-sky-500 transition-colors shadow-sm"
-                >
-                  View Public Profile
-                </Link>
-                <Link 
-                  href="/family"
-                  className="bg-white text-brand-sky px-4 py-2 rounded-full text-sm font-bold hover:bg-brand-sky/10 transition-colors border border-brand-sky/20"
-                >
-                  Meet Family
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
+    
 
-      {/* --- TAB NAVIGATION --- */}
-      <div className="flex border-b border-slate-200 mb-8 overflow-x-auto">
-        <button onClick={() => setActiveTab('dashboard')} className={`pb-4 px-6 font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'dashboard' ? 'border-b-4 border-brand-sky text-brand-sky' : 'text-slate-400 hover:text-slate-600'}`}>Dashboard</button>
-        <button onClick={() => setActiveTab('activity')} className={`pb-4 px-6 font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'activity' ? 'border-b-4 border-violet-500 text-violet-500' : 'text-slate-400 hover:text-slate-600'}`}>Activity</button>
-        <button onClick={() => setActiveTab('settings')} className={`pb-4 px-6 font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'settings' ? 'border-b-4 border-white text-white' : 'text-slate-400 hover:text-slate-600'}`}>Settings</button>
-        {isAdmin && (
-          <button onClick={() => setActiveTab('admin')} className={`pb-4 px-6 font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'admin' ? 'border-b-4 border-red-500 text-red-500' : 'text-slate-400 hover:text-slate-600'}`}>Admin</button>
-        )}
-      </div>
+                {isDefaultView && (
 
-      {activeTab === 'dashboard' && (
-        <div className="grid md:grid-cols-2 gap-6 animate-fade-in">
+    
+
+                  <div className="animate-fade-in mb-12">
+
+    
+
+                      {/* Mirror Content - Visitor's Perspective */}
+
+    
+
+                      <div className="w-full">
+
+    
+
+                        {/* Profile Header with Edit Button */}
+
+    
+
+                        <div className="flex justify-between items-start mb-8">
+
+    
+
+                          <div></div> {/* Spacer */}
+
+    
+
+                          <button 
+
+    
+
+                            onClick={() => setIsEditingDetails(!isEditingDetails)}
+
+    
+
+                            className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all border ${
+
+    
+
+                              isEditingDetails 
+
+    
+
+                                ? 'bg-slate-100 text-slate-600 border-slate-200' 
+
+    
+
+                                : canEdit
+
+    
+
+                                  ? 'bg-brand-sky text-white border-brand-sky shadow-sm hover:bg-sky-500'
+
+    
+
+                                  : 'bg-slate-50 text-slate-400 border-slate-100 cursor-not-allowed'
+
+    
+
+                            }`}
+
+    
+
+                            disabled={!canEdit && !isEditingDetails}
+
+    
+
+                          >
+
+    
+
+                            {isEditingDetails ? 'Cancel Editing' : canEdit ? 'Edit Profile' : `Wait ${Math.ceil(24 - timeSinceUpdate)}h to Edit`}
+
+    
+
+                          </button>
+
+    
+
+                        </div>
+
+    
+
           
-          {/* PRIVATE DETAILS CARD */}
-          <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
-            <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-              <span>🔐</span> Private Details
-            </h3>
-            
-            <div className="space-y-6">
-              {/* Email */}
-              <div>
-                <label className="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">Email</label>
-                <div className="flex items-center gap-3 text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-100">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-brand-sky"><path d="M3 4a2 2 0 0 0-2 2v1.161l8.441 4.221a1.25 1.25 0 0 0 1.118 0L19 7.162V6a2 2 0 0 0-2-2H3Z" /><path d="m19 8.839-7.77 3.885a2.75 2.75 0 0 1-2.46 0L1 8.839V14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.839Z" /></svg>
-                  <span className="font-medium">{user.email}</span>
-                </div>
-              </div>
 
-              {/* Phone */}
-              <div>
-                <label className="block text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">Phone</label>
-                <div className="flex items-center gap-3 text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-100">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-brand-sky"><path fillRule="evenodd" d="M2 3.5A1.5 1.5 0 0 1 3.5 2h1.148a1.5 1.5 0 0 1 1.465 1.175l.716 3.223a1.5 1.5 0 0 1-1.052 1.767l-.933.267c-.41.117-.643.555-.48.95a11.542 11.542 0 0 0 6.254 6.254c.395.163.833-.07.95-.48l.267-.933a1.5 1.5 0 0 1 1.767-1.052l3.223.716A1.5 1.5 0 0 1 18 15.352V16.5a1.5 1.5 0 0 1-1.5 1.5H15c-1.149 0-2.263-.15-3.326-.43A13.022 13.022 0 0 1 2.43 8.326 13.019 13.019 0 0 1 2 5V3.5Z" clipRule="evenodd" /></svg>
-                  <span className="font-medium">{user.phone || 'Not provided'}</span>
-                </div>
-              </div>
-            </div>
-          </div>
+    
 
-        </div>
-      )}
+                        {isEditingDetails ? (
 
-      
+    
 
-      {activeTab === 'activity' && (
-        <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 animate-fade-in space-y-8">
-           <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-             <span>📊</span> My Activity
-           </h3>
+                          <div className="bg-white p-6 md:p-8 rounded-3xl shadow-xl border border-slate-100 mb-12 animate-in zoom-in-95 duration-200">
+
+    
+
+                            <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+
+    
+
+                              <span>✏️</span> Edit Profile Details
+
+    
+
+                            </h3>
+
+    
+
+                            
+
+    
+
+                            <div className="space-y-6">
+
+    
+
+                              {/* Avatar Upload */}
+
+    
+
+                              <div className="flex flex-col items-center gap-4 p-6 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+
+    
+
+                                <div className="relative group">
+
+    
+
+                                  <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-md bg-slate-200 flex items-center justify-center">
+
+    
+
+                                    {previewUrl ? (
+
+    
+
+                                      <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+
+    
+
+                                    ) : (
+
+    
+
+                                      <span className="text-2xl text-slate-400">?</span>
+
+    
+
+                                    )}
+
+    
+
+                                  </div>
+
+    
+
+                                  {isCompressing && (
+
+    
+
+                                    <div className="absolute inset-0 bg-black/20 rounded-full flex items-center justify-center">
+
+    
+
+                                      <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+
+    
+
+                                    </div>
+
+    
+
+                                  )}
+
+    
+
+                                </div>
+
+    
+
+                                
+
+    
+
+                                <div className="flex gap-2">
+
+    
+
+                                  <button 
+
+    
+
+                                    onClick={() => selfieInputRef.current?.click()}
+
+    
+
+                                    className="bg-white px-4 py-2 rounded-xl text-xs font-bold text-slate-700 shadow-sm border border-slate-200 hover:bg-slate-50"
+
+    
+
+                                  >
+
+    
+
+                                    📷 Camera
+
+    
+
+                                  </button>
+
+    
+
+                                  <button 
+
+    
+
+                                    onClick={() => galleryInputRef.current?.click()}
+
+    
+
+                                    className="bg-white px-4 py-2 rounded-xl text-xs font-bold text-slate-700 shadow-sm border border-slate-200 hover:bg-slate-50"
+
+    
+
+                                  >
+
+    
+
+                                    🖼️ Gallery
+
+    
+
+                                  </button>
+
+    
+
+                                </div>
+
+    
+
+          
+
+    
+
+                                {profileImage && (
+
+    
+
+                                  <div className="flex gap-2">
+
+    
+
+                                     <button onClick={handleCancelPhoto} className="text-xs text-slate-400 font-bold px-2">Cancel Photo</button>
+
+    
+
+                                     <button 
+
+    
+
+                                      onClick={handleSavePhoto} 
+
+    
+
+                                      disabled={isSavingPhoto}
+
+    
+
+                                      className="bg-brand-sky text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-sm hover:bg-sky-500 disabled:opacity-50"
+
+    
+
+                                     >
+
+    
+
+                                       {isSavingPhoto ? 'Saving...' : 'Save Photo'}
+
+    
+
+                                     </button>
+
+    
+
+                                  </div>
+
+    
+
+                                )}
+
+    
+
+          
+
+    
+
+                                <input type="file" ref={selfieInputRef} className="hidden" accept="image/*" capture="user" onChange={handleImageChange} />
+
+    
+
+                                <input type="file" ref={galleryInputRef} className="hidden" accept="image/*" onChange={handleImageChange} />
+
+    
+
+                              </div>
+
+    
+
+          
+
+    
+
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+    
+
+                                <div>
+
+    
+
+                                  <label className="block text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider">First Name</label>
+
+    
+
+                                  <input value={firstName} onChange={e => setFirstName(e.target.value)} className="w-full p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-brand-sky outline-none transition-all text-sm font-medium" />
+
+    
+
+                                </div>
+
+    
+
+                                <div>
+
+    
+
+                                  <label className="block text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider">Last Name</label>
+
+    
+
+                                  <input value={lastName} onChange={e => setLastName(e.target.value)} className="w-full p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-brand-sky outline-none transition-all text-sm font-medium" />
+
+    
+
+                                </div>
+
+    
+
+                                <div>
+
+    
+
+                                  <label className="block text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider">Alias / Nickname</label>
+
+    
+
+                                  <input value={alias} onChange={e => setAlias(e.target.value)} className="w-full p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-brand-sky outline-none transition-all text-sm font-medium" />
+
+    
+
+                                </div>
+
+    
+
+                                <div>
+
+    
+
+                                  <label className="block text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider">Location</label>
+
+    
+
+                                  <input value={location} onChange={e => setLocation(e.target.value)} placeholder="e.g. London, UK" className="w-full p-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-brand-sky outline-none transition-all text-sm font-medium" />
+
+    
+
+                                </div>
+
+    
+
+                              </div>
+
+    
+
+          
+
+    
+
+                              <div>
+
+    
+
+                                <label className="block text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider">Current Status</label>
+
+    
+
+                                <div className="relative">
+
+    
+
+                                  <input 
+
+    
+
+                                    value={status} 
+
+    
+
+                                    onChange={e => setStatus(e.target.value)} 
+
+    
+
+                                    placeholder="What are you up to?" 
+
+    
+
+                                    className="w-full p-2.5 pr-10 rounded-xl border border-slate-200 focus:ring-2 focus:ring-brand-sky outline-none transition-all text-sm font-medium" 
+
+    
+
+                                  />
+
+    
+
+                                  <div className="absolute right-2 top-1/2 -translate-y-1/2 scale-75">
+
+    
+
+                                    <EmojiButton onEmojiSelect={handleEmojiSelect} />
+
+    
+
+                                  </div>
+
+    
+
+                                </div>
+
+    
+
+                              </div>
+
+    
+
+          
+
+    
+
+                              <div>
+
+    
+
+                                <label className="block text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider">Bio / About You</label>
+
+    
+
+                                <textarea 
+
+    
+
+                                  value={bio} 
+
+    
+
+                                  onChange={e => setBio(e.target.value)} 
+
+    
+
+                                  rows={4} 
+
+    
+
+                                  placeholder="Tell the family something new..." 
+
+    
+
+                                  className="w-full p-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-brand-sky outline-none transition-all text-sm font-medium resize-none" 
+
+    
+
+                                />
+
+    
+
+                              </div>
+
+    
+
+          
+
+    
+
+                              <div className="flex justify-end gap-3 pt-4">
+
+    
+
+                                <button 
+
+    
+
+                                  onClick={() => setIsEditingDetails(false)} 
+
+    
+
+                                  className="text-xs text-slate-400 font-bold px-4 py-2 hover:bg-slate-50 rounded-xl transition-colors"
+
+    
+
+                                >
+
+    
+
+                                  Discard Changes
+
+    
+
+                                </button>
+
+    
+
+                                <button 
+
+    
+
+                                  onClick={handleSaveDetails} 
+
+    
+
+                                  disabled={isSavingDetails}
+
+    
+
+                                  className="bg-brand-sky text-white px-8 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-sky-500/20 hover:bg-sky-500 disabled:opacity-50 transition-all hover:scale-105 active:scale-95"
+
+    
+
+                                >
+
+    
+
+                                  {isSavingDetails ? 'Saving...' : 'Save All Changes'}
+
+    
+
+                                </button>
+
+    
+
+                              </div>
+
+    
+
+                            </div>
+
+    
+
+                          </div>
+
+    
+
+                        ) : (
+
+    
+
+                          <>
+
+    
+
+                          {/* Profile Content - Expanded View */}
+
+    
+
+                          <div className="mb-8">
+
+    
+
+                            <div className="flex flex-col md:flex-row items-start gap-6 md:gap-8 mb-8">
+
+    
+
+                              {/* Avatar */}
+
+    
+
+                              <div className="relative shrink-0">
+
+    
+
+                                <div className="w-28 h-28 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-white shadow-xl bg-slate-100 flex items-center justify-center">
+
+    
+
+                                  {previewUrl ? (
+
+    
+
+                                    <img src={previewUrl} alt="Profile" className="w-full h-full object-cover" />
+
+    
+
+                                  ) : (
+
+    
+
+                                    <span className="text-4xl md:text-5xl text-brand-sky font-bold">
+
+    
+
+                                      {(alias || firstName)?.[0]?.toUpperCase()}
+
+    
+
+                                    </span>
+
+    
+
+                                  )}
+
+    
+
+                                </div>
+
+    
+
+                              </div>
+
+    
+
+          
+
+    
+
+                              {/* Basic Info */}
+
+    
+
+                              <div className="flex-1 text-left w-full">
+
+    
+
+                                <h3 className="text-3xl md:text-4xl font-extrabold text-slate-800 leading-tight mb-1">
+
+    
+
+                                  {firstName} {lastName}
+
+    
+
+                                </h3>
+
+    
+
+                                {alias && (
+
+    
+
+                                  <p className="text-xl md:text-2xl text-brand-sky font-bold mb-3">@{alias}</p>
+
+    
+
+                                )}
+
+    
+
+                                <div className="mb-4">
+
+    
+
+                                  <FamilyPositionIcon position={position} size="medium" />
+
+    
+
+                                </div>
+
+    
+
+          
+
+    
+
+                                {/* Location - Left Aligned */}
+
+    
+
+                                {location && (
+
+    
+
+                                  <div className="flex items-center justify-start gap-2 text-slate-600 mb-4">
+
+    
+
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-brand-sky">
+
+    
+
+                                      <path fillRule="evenodd" d="m9.69 18.933.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 0 0 .281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 1 0 3 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 0 0 2.273 1.765 11.842 11.842 0 0 0 .976.544l.062.029.018.008.006.003ZM10 11.25a2.25 2.25 0 1 0 0-4.5 2.25 2.25 0 0 0 0 4.5Z" clipRule="evenodd" />
+
+    
+
+                                    </svg>
+
+    
+
+                                    <span className="text-base md:text-lg font-bold">{location}</span>
+
+    
+
+                                  </div>
+
+    
+
+                                )}
+
+    
+
+                              </div>
+
+    
+
+                            </div>
+
+    
+
+          
+
+    
+
+                            {/* Status */}
+
+    
+
+                            {status && (
+
+    
+
+                              <div className="bg-brand-sky/5 p-4 md:p-6 rounded-2xl border border-brand-sky/10 mb-6 max-w-3xl">
+
+    
+
+                                <div className="flex items-center gap-3 text-slate-700">
+
+    
+
+                                  <span className="text-xl">💭</span>
+
+    
+
+                                  <span className="text-base md:text-lg font-bold italic leading-relaxed">"{status}"</span>
+
+    
+
+                                </div>
+
+    
+
+                              </div>
+
+    
+
+                            )}
+
+    
+
+          
+
+    
+
+                            {/* Bio */}
+
+    
+
+                            {bio && (
+
+    
+
+                              <div className="mb-8 max-w-3xl">
+
+    
+
+                                <h4 className="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-2">About Me</h4>
+
+    
+
+                                <p className="text-base md:text-lg text-slate-700 leading-relaxed font-medium">{bio}</p>
+
+    
+
+                              </div>
+
+    
+
+                            )}
+
+    
+
+                          </div>
+
+    
+
+          
+
+    
+
+                          {/* Family Connection Stats */}
+
+    
+
+                          <div className="flex justify-start mb-8">
+
+    
+
+                            <div className="bg-slate-100 p-3 px-6 rounded-xl text-left border border-slate-200">
+
+    
+
+                              <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Member Since</div>
+
+    
+
+                              <div className="flex items-center gap-2 text-slate-800 font-bold">
+
+    
+
+                                <span className="text-lg">📅</span>
+
+    
+
+                                <span className="text-base">
+
+    
+
+                                  {new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+
+    
+
+                                </span>
+
+    
+
+                              </div>
+
+    
+
+                            </div>
+
+    
+
+                          </div>
+
+    
+
+          
+
+    
+
+                          {/* PRIVATE DETAILS */}
+
+    
+
+                          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-12 max-w-3xl">
+
+    
+
+                            <h3 className="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
+
+    
+
+                              <span>🔐</span> Private Details
+
+    
+
+                            </h3>
+
+    
+
+                            
+
+    
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+    
+
+                              {/* Email */}
+
+    
+
+                              <div>
+
+    
+
+                                <label className="block text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider">Email</label>
+
+    
+
+                                <div className="flex items-center gap-2 text-slate-700 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+
+    
+
+                                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-brand-sky"><path d="M3 4a2 2 0 0 0-2 2v1.161l8.441 4.221a1.25 1.25 0 0 0 1.118 0L19 7.162V6a2 2 0 0 0-2-2H3Z" /><path d="m19 8.839-7.77 3.885a2.75 2.75 0 0 1-2.46 0L1 8.839V14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.839Z" /></svg>
+
+    
+
+                                  <span className="text-sm font-medium">{user.email}</span>
+
+    
+
+                                </div>
+
+    
+
+                              </div>
+
+    
+
+          
+
+    
+
+                              {/* Phone */}
+
+    
+
+                              <div>
+
+    
+
+                                <label className="block text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider">Phone</label>
+
+    
+
+                                <div className="flex items-center gap-2 text-slate-700 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+
+    
+
+                                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-brand-sky"><path fillRule="evenodd" d="M2 3.5A1.5 1.5 0 0 1 3.5 2h1.148a1.5 1.5 0 0 1 1.465 1.175l.716 3.223a1.5 1.5 0 0 1-1.052 1.767l-.933.267c-.41.117-.643.555-.48.95a11.542 11.542 0 0 0 6.254 6.254c.395.163.833-.07.95-.48l.267-.933a1.5 1.5 0 0 1 1.767-1.052l3.223.716A1.5 1.5 0 0 1 18 15.352V16.5a1.5 1.5 0 0 1-1.5 1.5H15c-1.149 0-2.263-.15-3.326-.43A13.022 13.022 0 0 1 2.43 8.326 13.019 13.019 0 0 1 2 5V3.5Z" clipRule="evenodd" /></svg>
+
+    
+
+                                  <span className="text-sm font-medium">{user.phone || 'Not provided'}</span>
+
+    
+
+                                </div>
+
+    
+
+                              </div>
+
+    
+
+                            </div>
+
+    
+
+                          </div>
+
+    
+
+                          </>
+
+    
+
+                        )}
+
+    
+
+                      </div>
+
+    
+
+                    </div>
+
+    
+
+                )}
+
+    
+
+          {activeTabInUrl === 'activity' && (
+
+                    <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 animate-fade-in space-y-8">
+
+                       <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+
+                         <span>📊</span> My Activity
+
+                       </h3>
 
            {isLoadingActivity ? (
              <div className="text-center py-10 text-slate-400">Loading activity...</div>
@@ -812,5 +1606,13 @@ export default function MyRoomClient({ user, allUsers = [] }: { user: any, allUs
         </div>
       )}
     </div>
+  )
+}
+
+export default function MyRoomClient(props: any) {
+  return (
+    <Suspense fallback={<div className="text-center py-20 text-slate-400">Loading your room...</div>}>
+      <MyRoomContent {...props} />
+    </Suspense>
   )
 }
