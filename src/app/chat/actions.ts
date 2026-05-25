@@ -197,15 +197,23 @@ export async function toggleReaction(messageId: string, userId: string, emoji: s
 
 export async function editChatMessage(messageId: string, userId: string, newContent: string) {
   try {
+    const user = await prisma.user.findUnique({ where: { id: userId } })
     const message = await prisma.chatMessage.findUnique({ where: { id: messageId } })
+    
     if (!message) return { success: false, message: 'Message not found' }
-    if (message.authorId !== userId) return { success: false, message: 'Unauthorized' }
+    
+    const isAdmin = user?.isAdmin || user?.email === 'idongesit_essien@ymail.com'
+    const isAuthor = message.authorId === userId
+
+    if (!isAuthor) return { success: false, message: 'Unauthorized' }
     if (message.isEdited) return { success: false, message: 'Message already edited once' }
     
-    // Check 15 minutes limit
-    const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000)
-    if (message.createdAt < fifteenMinutesAgo) {
-      return { success: false, message: 'Message can only be edited within 15 minutes of sending' }
+    // Check 15 minutes limit only for non-admins
+    if (!isAdmin) {
+      const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000)
+      if (message.createdAt < fifteenMinutesAgo) {
+        return { success: false, message: 'Message can only be edited within 15 minutes of sending' }
+      }
     }
 
     const updatedMessage = await prisma.chatMessage.update({

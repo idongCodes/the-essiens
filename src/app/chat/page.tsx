@@ -645,9 +645,11 @@ export default function ChatPage() {
     return Object.entries(groups).map(([emoji, users]) => ({ emoji, count: users.length, users }))
   }
 
+  const isAnyModalOpen = isMediaModalOpen || isInfoModalOpen || !!profileModal;
+
   return (
     <div className="fixed top-14 left-0 right-0 bottom-0 flex flex-col bg-slate-50 z-30">
-      <div className="flex-1 flex flex-col max-w-5xl mx-auto w-full bg-white shadow-xl sm:border-x border-slate-200 overflow-hidden">
+      <div className={`flex-1 flex flex-col max-w-5xl mx-auto w-full bg-white shadow-xl sm:border-x border-slate-200 overflow-hidden transition-all duration-300 ${isAnyModalOpen ? 'blur-[2px] brightness-90' : ''}`}>
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-gradient-to-r from-brand-sky to-brand-sky text-white shrink-0">
           <div className="flex items-center gap-3">
@@ -699,10 +701,20 @@ export default function ChatPage() {
               const showReactionPicker = selectedMessageId === message.id
 
               return (
-                <div key={message.id} className={`flex gap-3 relative group scroll-mt-32 ${isCurrentUser ? 'justify-end' : ''}`}>
+                <div key={message.id} className={`flex gap-3 relative group scroll-mt-32 ${isCurrentUser ? 'justify-end' : ''} ${showReactionPicker ? 'z-[70]' : 'z-0'}`}>
                   {!isCurrentUser && renderAvatar(message.author, 'small', (e) => handleAvatarClick(e, message.author))}
                   
-                  <div className={`flex flex-col ${isCurrentUser ? 'items-end' : 'items-start'} max-w-[75%]`}>
+                  {showReactionPicker && (
+                    <div 
+                      className="fixed inset-0 z-[50] bg-slate-900/10 backdrop-blur-[2px] animate-in fade-in duration-300"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setSelectedMessageId(null)
+                      }}
+                    />
+                  )}
+                  
+                  <div className={`flex flex-col ${isCurrentUser ? 'items-end' : 'items-start'} max-w-[75%] relative z-[60]`}>
                     
                     {/* Reply Context (Faded, behind) */}
                     {message.replyTo && (
@@ -720,8 +732,16 @@ export default function ChatPage() {
                         setSelectedMessageId(willShow ? message.id : null)
                         
                         if (willShow) {
-                          // Scroll the message into a better view if needed
-                          e.currentTarget.parentElement?.parentElement?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+                          // Wait for popover to render, then scroll it into view
+                          setTimeout(() => {
+                            if (popoverRef.current) {
+                              popoverRef.current.scrollIntoView({ 
+                                behavior: 'smooth', 
+                                block: 'nearest',
+                                inline: 'nearest'
+                              })
+                            }
+                          }, 100)
                         }
 
                         // Show timestamp temporarily
@@ -756,7 +776,7 @@ export default function ChatPage() {
                       {showReactionPicker && (
                         <div 
                           ref={popoverRef}
-                          className={`absolute z-20 bg-white shadow-xl rounded-2xl p-2 flex flex-col gap-2 border border-slate-200 animate-in zoom-in-95 duration-200 ${
+                          className={`absolute z-[100] bg-white shadow-xl rounded-2xl p-2 flex flex-col gap-2 border border-slate-200 animate-in zoom-in-95 duration-200 ${
                             popoverPosition === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'
                           } ${isCurrentUser ? 'right-0' : 'left-0'}`}
                         >
@@ -829,7 +849,7 @@ export default function ChatPage() {
 
                             return (
                               <div className="flex flex-col gap-2 w-full">
-                                {isAuthor && isWithinTimeLimit && !isTemp && !message.isEdited && (
+                                {isAuthor && (isAdmin || isWithinTimeLimit) && !isTemp && !message.isEdited && (
                                   <button
                                     onClick={(e) => {
                                         e.stopPropagation()
@@ -927,7 +947,7 @@ export default function ChatPage() {
         </div>
         
         {/* Message Input */}
-        <div className="p-4 border-t border-slate-200 bg-white shrink-0">
+        <div className="p-4 border-t border-slate-200 bg-white shrink-0 relative z-50">
           {/* Media Preview */}
           {previewUrl && (
             <div className="relative mb-3 w-fit">
@@ -1045,14 +1065,19 @@ export default function ChatPage() {
 
       {/* Profile Modal */}
       {profileModal && (
-        <div
-          className="fixed z-[110] bg-white rounded-xl shadow-2xl p-4 w-64 animate-in fade-in zoom-in-95 duration-200 border border-slate-100"
-          style={{ 
-            top: `${Math.min(profileModal.y + 10, typeof window !== 'undefined' ? window.innerHeight - 250 : 500)}px`, 
-            left: `${Math.min(profileModal.x + 10, typeof window !== 'undefined' ? window.innerWidth - 260 : 10)}px` 
-          }}
-          onClick={(e) => e.stopPropagation()}
-        >
+        <>
+          <div 
+            className="fixed inset-0 z-[105] bg-slate-900/10 backdrop-blur-[2px] animate-in fade-in duration-300" 
+            onClick={() => setProfileModal(null)}
+          />
+          <div
+            className="fixed z-[110] bg-white rounded-xl shadow-2xl p-4 w-64 animate-in fade-in zoom-in-95 duration-200 border border-slate-100"
+            style={{ 
+              top: `${Math.min(profileModal.y + 10, typeof window !== 'undefined' ? window.innerHeight - 250 : 500)}px`, 
+              left: `${Math.min(profileModal.x + 10, typeof window !== 'undefined' ? window.innerWidth - 260 : 10)}px` 
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
           <div className="flex items-center gap-3 mb-3">
              <div className="w-12 h-12 rounded-full overflow-hidden shrink-0">
                {profileModal.author.profileImage ? (
@@ -1093,6 +1118,7 @@ export default function ChatPage() {
             </button>
           </div>
         </div>
+        </>
       )}
 
       {/* Chat Info Modal */}
