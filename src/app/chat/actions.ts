@@ -32,6 +32,7 @@ export async function getChatMessages(cursor?: string) {
                 id: true,
                 firstName: true,
                 alias: true,
+                profileImage: true,
               }
             }
           }
@@ -149,6 +150,11 @@ export async function toggleReaction(messageId: string, userId: string, emoji: s
       }
     })
 
+    const reactor = await prisma.user.findUnique({ 
+      where: { id: userId },
+      select: { id: true, firstName: true, alias: true, profileImage: true }
+    })
+
     if (existingReaction) {
       // Remove reaction
       await prisma.messageReaction.delete({
@@ -169,13 +175,17 @@ export async function toggleReaction(messageId: string, userId: string, emoji: s
       // --- NOTIFY MESSAGE AUTHOR ---
       const message = await prisma.chatMessage.findUnique({ where: { id: messageId }, select: { authorId: true } })
       if (message && message.authorId !== userId) {
-        const reactor = await prisma.user.findUnique({ where: { id: userId } })
         const reactorName = reactor?.alias || reactor?.firstName || 'Someone'
         await sendNotification([message.authorId], `${reactorName} reacted ${emoji} to your message`, '/chat')
       }
     }
 
-    await pusherServer.trigger('presence-chat', 'reaction-toggled', { messageId, userId, emoji })
+    await pusherServer.trigger('presence-chat', 'reaction-toggled', { 
+      messageId, 
+      userId, 
+      emoji,
+      user: reactor 
+    })
 
     revalidatePath('/chat')
     return { success: true }
