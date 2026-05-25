@@ -730,9 +730,6 @@ export default function ChatPage() {
           )}
         
           <div className="flex gap-2 items-start">
-            <div className="transform -translate-y-0">
-              {currentUser ? renderAvatar(currentUser, 'medium', () => handleUserClick(currentUser)) : renderAvatar(users.you, 'medium')}
-            </div>
             <div className="flex-1">
               <div className="relative flex items-center gap-2 bg-slate-100 rounded-3xl px-4 py-2 focus-within:ring-2 focus-within:ring-brand-sky transition-shadow">
                 <button 
