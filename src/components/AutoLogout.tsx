@@ -50,41 +50,10 @@ export default function AutoLogout() {
     const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click']
     events.forEach(event => window.addEventListener(event, updateActivity))
 
-    // 3. Tab/Window Close Handler
-    const handleTabClose = async (event: BeforeUnloadEvent | PageTransitionEvent) => {
-      // Only logout if user is actually logged in and there's meaningful activity
-      const now = Date.now()
-      const timeSinceLastActivity = now - lastActivity.current
-      
-      // Don't logout if user was inactive for more than the timeout (they're already "logged out")
-      if (timeSinceLastActivity < TIMEOUT_MS) {
-        try {
-          // For beforeunload, we can't make async calls reliably, but we can try
-          if ('event' in event && event.type === 'beforeunload') {
-            // Use navigator.sendBeacon for reliable logout during page unload
-            const data = new FormData()
-            data.append('action', 'logout')
-            navigator.sendBeacon('/api/logout', data)
-          } else {
-            // For pagehide, we can try async logout
-            await logout()
-          }
-        } catch (e) {
-          console.error("Tab close logout failed", e)
-        }
-      }
-    }
-
-    // Add tab close listeners
-    window.addEventListener('beforeunload', handleTabClose)
-    window.addEventListener('pagehide', handleTabClose)
-
     // Cleanup
     return () => {
       clearInterval(intervalId)
       events.forEach(event => window.removeEventListener(event, updateActivity))
-      window.removeEventListener('beforeunload', handleTabClose)
-      window.removeEventListener('pagehide', handleTabClose)
     }
   }, [])
 
