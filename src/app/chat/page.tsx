@@ -1106,7 +1106,11 @@ export default function ChatPage() {
           <div className="pt-2 border-t border-slate-50">
             <button 
               onClick={() => {
-                router.push(`/${profileModal.author.firstName.toLowerCase()}s-room`)
+                if (profileModal.author.id === currentUserId) {
+                  router.push('/my-room')
+                } else {
+                  router.push(`/${profileModal.author.firstName.toLowerCase()}s-room`)
+                }
                 setProfileModal(null)
               }}
               className="text-xs font-bold text-brand-sky hover:text-sky-600 flex items-center gap-1 transition-colors"
