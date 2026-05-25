@@ -30,7 +30,7 @@ export default async function TestimonialSection() {
       </div>
 
       <div className="max-w-6xl mx-auto relative z-10">
-        <h2 className="text-4xl font-extrabold text-white text-center mb-12 tracking-tight drop-shadow-sm">
+        <h2 className="text-4xl font-extrabold text-white text-left md:text-center mb-12 tracking-tight drop-shadow-sm">
           Testimonials
         </h2>
 

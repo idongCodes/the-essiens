@@ -9,7 +9,7 @@ export default function Home() {
     <main className="min-h-screen flex flex-col font-sans text-slate-800">
       
       {/* --- HERO SECTION --- */}
-      <section className="relative bg-brand-sky text-white pt-42 pb-32 px-6 text-center overflow-hidden">
+      <section className="relative bg-brand-sky text-white pt-42 pb-32 px-6 text-left md:text-center overflow-hidden">
         
         {/* BACKGROUND IMAGE LAYER */}
         <div className="absolute inset-0 z-0">
@@ -25,7 +25,7 @@ export default function Home() {
         </div>
 
         {/* CONTENT LAYER */}
-        <div className="relative z-10 max-w-4xl mx-auto flex flex-col items-center">
+        <div className="relative z-10 max-w-4xl mx-auto flex flex-col items-start md:items-center">
           
           {/* Main Headline */}
           <h1 className="text-5xl md:text-7xl font-bold mb-6 tracking-tight drop-shadow-md">
@@ -38,7 +38,7 @@ export default function Home() {
           </p>
 
           {/* Call to Actions */}
-          <div className="flex flex-col sm:flex-row gap-4 w-full justify-center mb-8">
+          <div className="flex flex-col sm:flex-row gap-4 w-full justify-start md:justify-center mb-8">
             <Link 
               href="/common-room"
               className="bg-white text-slate-800 px-8 py-4 rounded-full font-bold shadow-lg hover:bg-white hover:scale-105 transition-all text-lg"
@@ -61,7 +61,7 @@ export default function Home() {
       </section>
 
       <section className="py-20 px-6 bg-white">
-        <div className="max-w-3xl mx-auto text-center">
+        <div className="max-w-3xl mx-auto text-left md:text-center">
           <h2 className="text-3xl font-bold mb-8 text-brand-sky">The Mission</h2>
           <p className="text-lg text-left text-slate-600 leading-relaxed mb-8">
             In the age of endless notifications and cluttered group chats, staying connected shouldn&apos;t be complicated.
@@ -73,7 +73,7 @@ export default function Home() {
 
       <section className="bg-white py-20 px-6">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold mb-12 text-center text-brand-sky">Highlights</h2>
+          <h2 className="text-3xl font-bold mb-12 text-left md:text-center text-brand-sky">Highlights</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-slate-50">

@@ -37,6 +37,7 @@ export default function ChatPage() {
   const inputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const cameraInputRef = useRef<HTMLInputElement>(null)
+  const videoCameraInputRef = useRef<HTMLInputElement>(null)
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const channelRef = useRef<any>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
@@ -784,7 +785,15 @@ export default function ChatPage() {
                 type="file"
                 ref={cameraInputRef}
                 className="hidden"
-                accept="image/*,video/*"
+                accept="image/*"
+                capture="environment"
+                onChange={handleFileChange}
+              />
+              <input 
+                type="file"
+                ref={videoCameraInputRef}
+                className="hidden"
+                accept="video/*"
                 capture="environment"
                 onChange={handleFileChange}
               />
@@ -841,8 +850,23 @@ export default function ChatPage() {
                   </svg>
                 </div>
                 <div>
-                  <div className="font-bold text-slate-700">Take Photo/Video</div>
-                  <div className="text-xs text-slate-500">Use your camera directly</div>
+                  <div className="font-bold text-slate-700">Take Photo</div>
+                  <div className="text-xs text-slate-500">Take a photo using your camera</div>
+                </div>
+              </button>
+
+              <button 
+                onClick={() => { setIsMediaModalOpen(false); videoCameraInputRef.current?.click(); }}
+                className="w-full flex items-center gap-4 p-4 hover:bg-slate-50 rounded-xl transition-all text-left border border-slate-100 shadow-sm hover:shadow active:scale-[0.98]"
+              >
+                <div className="bg-brand-sky/10 p-3 rounded-full text-brand-sky">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="font-bold text-slate-700">Record Video</div>
+                  <div className="text-xs text-slate-500">Record a video using your camera</div>
                 </div>
               </button>
             </div>

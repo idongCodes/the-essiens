@@ -36,12 +36,12 @@ export default function FeedbackSection() {
       <div className="max-w-2xl mx-auto">
         
         {/* HEADING */}
-        <h3 className="text-xl font-bold text-slate-800 mb-2 text-center">
+        <h3 className="text-xl font-bold text-slate-800 mb-2 text-left md:text-center">
           What do you love about this app?
         </h3>
         
         {/* SUBTEXT (Added Here) */}
-        <p className="text-slate-500 text-sm text-center mb-8">
+        <p className="text-slate-500 text-sm text-left md:text-center mb-8">
           The encouragement you share here will be visible in the Testimonials section on the homepage ♥️
         </p>
         
