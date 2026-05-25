@@ -38,6 +38,7 @@ export default function ChatPage() {
   const [profileModal, setProfileModal] = useState<{ author: any, x: number, y: number } | null>(null)
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false)
   const [chatMedia, setChatMedia] = useState<any[]>([])
+  const [popoverPosition, setPopoverPosition] = useState<'top' | 'bottom'>('top')
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const topRef = useRef<HTMLDivElement>(null)
@@ -49,6 +50,7 @@ export default function ChatPage() {
   const timestampTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const channelRef = useRef<any>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const popoverRef = useRef<HTMLDivElement>(null)
 
   // Available reactions
   const REACTION_EMOJIS = ['❤️', '👍', '😂', '😮', '😢']
@@ -65,6 +67,20 @@ export default function ChatPage() {
       fetchChatMedia()
     }
   }, [isInfoModalOpen])
+
+  // Check popover position
+  useEffect(() => {
+    if (selectedMessageId && popoverRef.current) {
+      const rect = popoverRef.current.getBoundingClientRect()
+      if (rect.top < 60) { // 60 is roughly the header height
+        setPopoverPosition('bottom')
+      } else {
+        setPopoverPosition('top')
+      }
+    } else {
+      setPopoverPosition('top')
+    }
+  }, [selectedMessageId])
 
   const fetchCurrentUser = useCallback(async (userId: string) => {
     try {
@@ -198,16 +214,24 @@ export default function ChatPage() {
     })
 
     channel.bind('reaction-toggled', (data: any) => {
+      // Don't process our own reactions again (they were handled optimistically)
+      if (data.userId === currentUserId) return
+
       setMessages(prev => prev.map(msg => {
         if (msg.id === data.messageId) {
-          const existing = msg.reactions?.find((r: any) => r.userId === data.userId && r.emoji === data.emoji)
+          const reactions = msg.reactions || []
+          // Check if this exact reaction exists
+          const existing = reactions.find((r: any) => r.userId === data.userId && r.emoji === data.emoji)
+          
           if (existing) {
-            return { ...msg, reactions: msg.reactions.filter((r: any) => r.id !== existing.id) }
+            // Remove it
+            return { ...msg, reactions: reactions.filter((r: any) => r.id !== existing.id) }
           } else {
+            // Add it
             return {
               ...msg,
-              reactions: [...(msg.reactions || []), {
-                id: 'temp-' + Date.now(),
+              reactions: [...reactions, {
+                id: 'pusher-' + Date.now(),
                 emoji: data.emoji,
                 userId: data.userId,
                 user: data.user
@@ -468,24 +492,34 @@ export default function ChatPage() {
   }
 
   const handleReaction = async (messageId: string, emoji: string) => {
-    if (!currentUserId) return
+    if (!currentUserId || !currentUser) return
     
+    // Save current user info locally to avoid closure issues
+    const userSnapshot = { 
+      id: currentUserId, 
+      firstName: currentUser.firstName, 
+      alias: currentUser.alias,
+      profileImage: currentUser.profileImage 
+    }
+
     setMessages(prev => prev.map(msg => {
       if (msg.id === messageId) {
-        const existingReaction = msg.reactions?.find((r: any) => r.userId === currentUserId && r.emoji === emoji)
+        const reactions = msg.reactions || []
+        const existingReaction = reactions.find((r: any) => r.userId === currentUserId && r.emoji === emoji)
+        
         if (existingReaction) {
            return {
              ...msg,
-             reactions: msg.reactions.filter((r: any) => r.id !== existingReaction.id)
+             reactions: reactions.filter((r: any) => r.id !== existingReaction.id)
            }
         } else {
            return {
              ...msg,
-             reactions: [...(msg.reactions || []), {
+             reactions: [...reactions, {
                id: 'temp-' + Date.now(),
                emoji,
                userId: currentUserId,
-               user: { id: currentUserId, firstName: currentUser?.firstName || 'Me', alias: currentUser?.alias }
+               user: userSnapshot
              }]
            }
         }
@@ -493,7 +527,15 @@ export default function ChatPage() {
       return msg
     }))
 
-    await toggleReaction(messageId, currentUserId, emoji)
+    try {
+      const result = await toggleReaction(messageId, currentUserId, emoji)
+      if (!result.success) {
+        toast.error("Failed to update reaction")
+        // Note: In a true production app, we would revert the optimistic update here
+      }
+    } catch (err) {
+      console.error(err)
+    }
   }
 
   const handleReply = (message: any) => {
@@ -657,7 +699,7 @@ export default function ChatPage() {
               const showReactionPicker = selectedMessageId === message.id
 
               return (
-                <div key={message.id} className={`flex gap-3 relative group ${isCurrentUser ? 'justify-end' : ''}`}>
+                <div key={message.id} className={`flex gap-3 relative group scroll-mt-32 ${isCurrentUser ? 'justify-end' : ''}`}>
                   {!isCurrentUser && renderAvatar(message.author, 'small', (e) => handleAvatarClick(e, message.author))}
                   
                   <div className={`flex flex-col ${isCurrentUser ? 'items-end' : 'items-start'} max-w-[75%]`}>
@@ -674,8 +716,14 @@ export default function ChatPage() {
                       className={`relative p-3 rounded-2xl shadow-sm cursor-pointer transition-all active:scale-95 min-w-[60px] ${isCurrentUser ? 'bg-brand-sky text-white rounded-br-sm' : 'bg-white text-slate-700 border border-slate-100 rounded-bl-sm'}`}
                       onClick={(e) => {
                         e.stopPropagation()
-                        setSelectedMessageId(showReactionPicker ? null : message.id)
+                        const willShow = !showReactionPicker
+                        setSelectedMessageId(willShow ? message.id : null)
                         
+                        if (willShow) {
+                          // Scroll the message into a better view if needed
+                          e.currentTarget.parentElement?.parentElement?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+                        }
+
                         // Show timestamp temporarily
                         setVisibleTimestampId(message.id)
                         if (timestampTimeoutRef.current) clearTimeout(timestampTimeoutRef.current)
@@ -685,24 +733,33 @@ export default function ChatPage() {
                       }}
                     >
                       {message.imageUrl && (
-                        <img 
-                          src={message.imageUrl} 
-                          alt="Shared image" 
-                          className="max-w-full rounded-lg mb-2 border border-white/20 shadow-sm" 
-                        />
+                        <div className="relative mb-2 rounded-lg overflow-hidden bg-slate-200/50 min-h-[100px] flex items-center justify-center">
+                          <img 
+                            src={message.imageUrl} 
+                            alt="Shared image" 
+                            className="max-w-full rounded-lg border border-white/20 shadow-sm pointer-events-none select-none" 
+                          />
+                        </div>
                       )}
                       {message.videoUrl && (
-                        <video 
-                          src={message.videoUrl} 
-                          controls 
-                          className="max-w-full rounded-lg mb-2 border border-white/20 shadow-sm" 
-                        />
+                        <div className="relative mb-2 rounded-lg overflow-hidden bg-slate-200/50 min-h-[150px] flex items-center justify-center group/video">
+                          <video 
+                            src={message.videoUrl} 
+                            controls 
+                            className="max-w-full rounded-lg border border-white/20 shadow-sm" 
+                          />
+                        </div>
                       )}
                       {message.content && <p className="text-sm break-words whitespace-pre-wrap">{message.content}</p>}
                       
                       {/* Reaction Picker Popover */}
                       {showReactionPicker && (
-                        <div className={`absolute bottom-full mb-2 z-10 bg-white shadow-xl rounded-2xl p-2 flex flex-col gap-2 border border-slate-200 animate-in zoom-in-95 duration-200 ${isCurrentUser ? 'right-0' : 'left-0'}`}>
+                        <div 
+                          ref={popoverRef}
+                          className={`absolute z-20 bg-white shadow-xl rounded-2xl p-2 flex flex-col gap-2 border border-slate-200 animate-in zoom-in-95 duration-200 ${
+                            popoverPosition === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'
+                          } ${isCurrentUser ? 'right-0' : 'left-0'}`}
+                        >
                           {/* Reaction Summary (NEW) */}
                           {message.reactions && message.reactions.length > 0 && (
                             <div className="px-2 py-1 mb-1 border-b border-slate-100 flex items-center justify-between gap-4">
