@@ -18,6 +18,7 @@ export default function ChatPage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [currentUser, setCurrentUser] = useState<any>(null)
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null)
+  const [visibleTimestampId, setVisibleTimestampId] = useState<string | null>(null)
   const [replyingTo, setReplyingTo] = useState<{ id: string, content: string, authorName: string } | null>(null)
   const [nextCursor, setNextCursor] = useState<string | undefined>(undefined)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
@@ -41,6 +42,7 @@ export default function ChatPage() {
   const cameraInputRef = useRef<HTMLInputElement>(null)
   const videoCameraInputRef = useRef<HTMLInputElement>(null)
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const timestampTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const channelRef = useRef<any>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
 
@@ -190,7 +192,7 @@ export default function ChatPage() {
                 id: 'temp-' + Date.now(),
                 emoji: data.emoji,
                 userId: data.userId,
-                // Partial user data, real data syncs on next reload or we can fetch, but we only need it for counting
+                user: data.user
               }]
             }
           }
@@ -638,10 +640,17 @@ export default function ChatPage() {
 
                     {/* Message Bubble */}
                     <div 
-                      className={`relative p-3 rounded-2xl shadow-sm cursor-pointer transition-all active:scale-95 ${isCurrentUser ? 'bg-brand-sky text-white rounded-br-sm' : 'bg-white text-slate-700 border border-slate-100 rounded-bl-sm'}`}
+                      className={`relative p-3 rounded-2xl shadow-sm cursor-pointer transition-all active:scale-95 min-w-[60px] ${isCurrentUser ? 'bg-brand-sky text-white rounded-br-sm' : 'bg-white text-slate-700 border border-slate-100 rounded-bl-sm'}`}
                       onClick={(e) => {
                         e.stopPropagation()
                         setSelectedMessageId(showReactionPicker ? null : message.id)
+                        
+                        // Show timestamp temporarily
+                        setVisibleTimestampId(message.id)
+                        if (timestampTimeoutRef.current) clearTimeout(timestampTimeoutRef.current)
+                        timestampTimeoutRef.current = setTimeout(() => {
+                          setVisibleTimestampId(null)
+                        }, 4000)
                       }}
                     >
                       {message.imageUrl && (
@@ -663,6 +672,37 @@ export default function ChatPage() {
                       {/* Reaction Picker Popover */}
                       {showReactionPicker && (
                         <div className={`absolute bottom-full mb-2 z-10 bg-white shadow-xl rounded-2xl p-2 flex flex-col gap-2 border border-slate-200 animate-in zoom-in-95 duration-200 ${isCurrentUser ? 'right-0' : 'left-0'}`}>
+                          {/* Reaction Summary (NEW) */}
+                          {message.reactions && message.reactions.length > 0 && (
+                            <div className="px-2 py-1 mb-1 border-b border-slate-100 flex items-center justify-between gap-4">
+                              <div className="flex -space-x-2 overflow-hidden">
+                                {Array.from(new Map(message.reactions.map((r: any) => [r.user?.id, r.user])).values())
+                                  .slice(0, 5)
+                                  .map((user: any, idx: number) => (
+                                    <div 
+                                      key={user?.id || idx} 
+                                      className="inline-block h-5 w-5 rounded-full ring-2 ring-white bg-brand-sky text-[8px] flex items-center justify-center text-white font-bold overflow-hidden"
+                                    >
+                                      {user?.profileImage ? (
+                                        <img src={user.profileImage} alt="" className="h-full w-full object-cover" />
+                                      ) : (
+                                        <span>{(user?.alias || user?.firstName || '?')[0].toUpperCase()}</span>
+                                      )}
+                                    </div>
+                                  ))
+                                }
+                                {new Set(message.reactions.map((r: any) => r.userId)).size > 5 && (
+                                  <div className="inline-block h-5 w-5 rounded-full ring-2 ring-white bg-slate-100 text-[8px] flex items-center justify-center text-slate-500 font-bold">
+                                    +{new Set(message.reactions.map((r: any) => r.userId)).size - 5}
+                                  </div>
+                                )}
+                              </div>
+                              <span className="text-[10px] font-bold text-slate-400 whitespace-nowrap">
+                                {new Set(message.reactions.map((r: any) => r.userId)).size} {new Set(message.reactions.map((r: any) => r.userId)).size === 1 ? 'person' : 'people'}
+                              </span>
+                            </div>
+                          )}
+
                           {/* Reactions */}
                           <div className="flex gap-1">
                             {REACTION_EMOJIS.map(emoji => (
@@ -724,29 +764,22 @@ export default function ChatPage() {
                           )}
                         </div>
                       )}
-                    </div>
 
-                    {/* Meta & Reactions */}
-                    <div className="flex flex-col gap-1 mt-1">
-                      <div className={`flex items-center gap-2 px-1 ${isCurrentUser ? 'justify-end' : ''}`}>
-                          <p className={`text-[10px] ${isCurrentUser ? 'text-slate-400' : 'text-slate-400'}`}>
-                            {formatTime(message.createdAt)}
-                            {message.isEdited && <span className="ml-1 italic text-slate-400">(edited)</span>}
-                          </p>
-                      </div>
-
-                      {/* Display Reactions */}
+                      {/* Display Reactions Sitting on Bubble */}
                       {groupedReactions.length > 0 && (
-                        <div className={`flex flex-wrap gap-1 ${isCurrentUser ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`absolute -bottom-3 ${isCurrentUser ? 'right-2' : 'left-2'} flex flex-wrap gap-1 z-10`}>
                           {groupedReactions.map(({ emoji, count, users }) => {
                              const userReacted = users.some((u: any) => u.userId === currentUserId)
                              return (
                                <button
                                  key={emoji}
-                                 onClick={() => handleReaction(message.id, emoji)}
-                                 className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs border ${
+                                 onClick={(e) => {
+                                   e.stopPropagation()
+                                   handleReaction(message.id, emoji)
+                                 }}
+                                 className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs border shadow-sm transition-transform active:scale-90 ${
                                    userReacted 
-                                     ? 'bg-brand-sky/10 border-brand-sky/30 text-brand-sky' 
+                                     ? 'bg-brand-sky border-brand-sky text-white' 
                                      : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
                                  }`}
                                >
@@ -755,6 +788,18 @@ export default function ChatPage() {
                                </button>
                              )
                           })}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Meta */}
+                    <div className={`flex flex-col gap-1 ${groupedReactions.length > 0 ? 'mt-6' : 'mt-1'} min-h-[14px]`}>
+                      {visibleTimestampId === message.id && (
+                        <div className={`flex items-center gap-2 px-1 animate-in fade-in slide-in-from-top-1 duration-200 ${isCurrentUser ? 'justify-end' : ''}`}>
+                            <p className={`text-[10px] ${isCurrentUser ? 'text-slate-400' : 'text-slate-400'}`}>
+                              {formatTime(message.createdAt)}
+                              {message.isEdited && <span className="ml-1 italic text-slate-400">(edited)</span>}
+                            </p>
                         </div>
                       )}
                     </div>
@@ -929,10 +974,25 @@ export default function ChatPage() {
              </div>
           </div>
           {profileModal.author.bio && (
-             <p className="text-xs text-slate-600 italic border-t border-slate-100 pt-2">
+             <p className="text-xs text-slate-600 italic border-t border-slate-100 pt-2 mb-3">
                 &quot;{profileModal.author.bio.substring(0, 75)}{profileModal.author.bio.length > 75 ? '...' : ''}&quot;
              </p>
           )}
+
+          <div className="pt-2 border-t border-slate-50">
+            <button 
+              onClick={() => {
+                router.push(`/${profileModal.author.firstName.toLowerCase()}s-room`)
+                setProfileModal(null)
+              }}
+              className="text-xs font-bold text-brand-sky hover:text-sky-600 flex items-center gap-1 transition-colors"
+            >
+              View Profile
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3 h-3">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+              </svg>
+            </button>
+          </div>
         </div>
       )}
 
