@@ -5,12 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
+    "build": "prisma generate && next build --webpack",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
+    "@serwist/next": "^9.5.11",
     "bcryptjs": "^3.0.3",
     "cloudinary": "^2.9.0",
     "emoji-picker-react": "^4.16.1",
@@ -20,6 +21,7 @@
     "pusher-js": "^8.5.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "serwist": "^9.5.11",
     "web-push": "^3.6.7"
   },
   "devDependencies": {

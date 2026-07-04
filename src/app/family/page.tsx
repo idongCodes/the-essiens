@@ -28,8 +28,9 @@ async function getUsers(positionFilter?: string) {
   })
 }
 
-export default async function FamilyDirectory({ searchParams }: { searchParams: { position?: string } }) {
-  const positionFilter = searchParams.position
+export default async function FamilyDirectory({ searchParams }: { searchParams: Promise<{ position?: string }> }) {
+  const params = await searchParams;
+  const positionFilter = params.position;
   const users = await getUsers(positionFilter)
   const cookieStore = await cookies()
   const currentUserEmail = 'idongesit_essien@ymail.com' // Admin check

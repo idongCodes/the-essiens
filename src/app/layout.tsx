@@ -22,8 +22,11 @@ const geistMono = Geist_Mono({
 });
 
 export const viewport: Viewport = {
-  themeColor: "#ffffff",
+  themeColor: "#87CEEB",
   colorScheme: "light",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export const metadata: Metadata = {
@@ -31,6 +34,14 @@ export const metadata: Metadata = {
   title: "The Essiens | A Private Family Connection Space",
   description: "Stay genuinely connected with family through private updates, photos, and milestones. A safe, ad-free space designed for meaningful communication and long-lasting memories.",
   keywords: ["family", "connection", "private social network", "The Essiens", "family updates", "safe space", "secure communication"],
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "The Essiens",
+  },
+  formatDetection: {
+    telephone: false,
+  },
   openGraph: {
     title: "The Essiens | Welcome Home!",
     description: "A private, safe space for our family to share life's precious moments, photos, and updates without the clutter of traditional social media.",
