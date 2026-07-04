@@ -185,4 +185,7 @@ model AlbumMedia {
 
 
 
-
+model AppConfig {
+  id             String @id @default("global")
+  familyPasscode String @default("ESSIEN2026")
+}

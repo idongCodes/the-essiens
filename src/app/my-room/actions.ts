@@ -272,3 +272,35 @@ export async function adminUpdateUser(formData: FormData) {
     return { success: false, message: "Failed to update user." }
   }
 }
+
+// --- 7. ADMIN UPDATE PASSCODE ---
+export async function adminUpdatePasscode(newPasscode: string) {
+  const cookieStore = await cookies()
+  const currentUserId = cookieStore.get('session_id')?.value
+  const ADMIN_EMAIL = 'idongesit_essien@ymail.com'
+
+  if (!currentUserId) return { success: false, message: "Unauthorized" }
+
+  const adminUser = await prisma.user.findUnique({ where: { id: currentUserId } })
+  if (adminUser?.email?.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+    return { success: false, message: "Only Admin can edit the passcode." }
+  }
+
+  if (!newPasscode || newPasscode.trim() === "") {
+    return { success: false, message: "Passcode cannot be empty." }
+  }
+
+  try {
+    await prisma.appConfig.upsert({
+      where: { id: 'global' },
+      update: { familyPasscode: newPasscode },
+      create: { id: 'global', familyPasscode: newPasscode }
+    })
+    
+    revalidatePath('/my-room')
+    return { success: true }
+  } catch (error) {
+    console.error("Admin Edit Passcode Error:", error)
+    return { success: false, message: "Failed to update passcode." }
+  }
+}
