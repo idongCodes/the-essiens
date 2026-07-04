@@ -6,8 +6,6 @@ import CommentItem from './CommentItem'
 import LikeButton from './LikeButton'
 import EmojiButton from './EmojiButton'
 import { useRouter } from 'next/navigation'
-import StatusBadge from './StatusBadge'
-import FamilyPositionIcon from './FamilyPositionIcon'
 import { useToast } from '@/context/ToastContext'
 import { useConfirm } from '@/context/ConfirmContext'
 
@@ -144,9 +142,6 @@ export default function PostCard({ post, currentUserId, isAdmin = false }: { pos
                  <span>{firstLetter}</span>
               )}
             </button>
-            
-            {/* ✅ REPLACED MANUAL BADGE WITH COMPONENT */}
-            <StatusBadge status={post.author.status} size="normal" />
           </div>
           
           <div className="flex flex-col">
@@ -157,9 +152,6 @@ export default function PostCard({ post, currentUserId, isAdmin = false }: { pos
               >
                 {displayName}
               </button>
-            </div>
-            <div className="mt-1">
-              <FamilyPositionIcon position={post.author.position} size="small" />
             </div>
             {post.author.isAdmin && (
               <span className="bg-slate-700 text-white text-[10px] font-bold px-1.5 py-0.5 rounded w-fit flex items-center gap-1 mt-1 shadow-sm">
