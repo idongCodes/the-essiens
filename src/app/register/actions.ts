@@ -88,13 +88,16 @@ export async function registerUser(formData: FormData) {
     select: { id: true }
   })
   
-  if (allOtherUsers.length > 0) {
+    if (allOtherUsers.length > 0) {
     await sendNotification(
       allOtherUsers.map(u => u.id),
       `${displayName} has joined the family! 🎉`,
       '/family'
     )
   }
+
+  // Remove demo cookie if it exists
+  cookieStore.delete('is_demo')
 
   return { success: true }
 }

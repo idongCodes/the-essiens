@@ -8,6 +8,8 @@ import { prisma } from '@/lib/prisma'
 export async function logout() {
   const cookieStore = await cookies()
   cookieStore.delete('session_id')
+  cookieStore.delete('user_session')
+  cookieStore.delete('is_demo')
   redirect('/')
 }
 
