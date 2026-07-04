@@ -41,14 +41,14 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row gap-4 w-full justify-start md:justify-center mb-8">
             <Link 
               href="/common-room"
-              className="bg-white text-slate-800 px-8 py-4 rounded-full font-bold shadow-lg hover:bg-white hover:scale-105 transition-all text-lg"
+              className="bg-white text-slate-800 px-8 py-4 rounded-full font-bold shadow-lg hover:bg-white hover:scale-105 transition-all text-lg text-center flex justify-center items-center"
             >
               Enter Common Room
             </Link>
             
             <Link 
               href="/register"
-              className="bg-brand-sky text-slate-800 px-8 py-4 rounded-full font-bold shadow-lg hover:brightness-110 hover:scale-105 transition-all text-lg"
+              className="bg-brand-sky text-slate-800 px-8 py-4 rounded-full font-bold shadow-lg hover:brightness-110 hover:scale-105 transition-all text-lg text-center flex justify-center items-center"
             >
               Join Family
             </Link>
