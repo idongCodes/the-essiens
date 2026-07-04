@@ -8,7 +8,8 @@ const publicRoutes = [
   '/register', 
   '/forgot-password',
   '/reset-password',
-  '/about' // Future-proofed as requested
+  '/about', // Future-proofed as requested
+  '/demo'
 ]
 
 export function middleware(request: NextRequest) {

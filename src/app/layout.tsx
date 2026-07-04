@@ -5,6 +5,7 @@ import AutoLogout from "@/components/AutoLogout";
 import FeedbackWidget from "@/components/FeedbackWidget";
 import NotificationPrompt from "@/components/NotificationPrompt";
 import NavigationTracker from "@/components/NavigationTracker";
+import DemoPrompt from "@/components/DemoPrompt";
 import { cookies } from "next/headers";
 import { AuthProvider } from "@/context/AuthProvider";
 import { ToastProvider } from "@/context/ToastContext";
@@ -75,9 +76,10 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Check Login Status (Used ONLY for AutoLogout visibility now)
+  // Check Login Status
   const cookieStore = await cookies()
   const isLoggedIn = cookieStore.has('session_id')
+  const isDemoUser = cookieStore.has('is_demo')
 
   return (
     <html lang="en">
@@ -95,10 +97,13 @@ export default async function RootLayout({
                 {children}
               </main>
 
-              {/* 3. Notification Prompt (Only if logged in) */}
+              {/* Notification Prompt (Only if logged in) */}
               {isLoggedIn && <NotificationPrompt />}
 
-              {/* 4. Global Footer */}
+              {/* Demo Join Prompt */}
+              {isLoggedIn && <DemoPrompt isDemoUser={isDemoUser} />}
+
+              {/* Global Footer */}
               <footer className="bg-slate-800 text-brand-sky py-8 text-center border-t border-slate-700">
                 
                 {/* Feedback Widget Trigger (Sits inside footer) */}
