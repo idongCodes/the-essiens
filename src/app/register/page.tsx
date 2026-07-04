@@ -72,7 +72,7 @@ function RegisterContent() {
   }
 
   return (
-    <div className="bg-white p-8 md:p-12 rounded-3xl shadow-2xl max-w-xl w-full border border-slate-100 flex flex-col relative overflow-hidden">
+    <div className="bg-white p-6 sm:p-8 md:p-12 rounded-3xl shadow-2xl max-w-xl w-full border border-slate-100 flex flex-col relative overflow-hidden">
         
         {/* Header */}
         <div className="mb-8 text-center">

@@ -74,7 +74,7 @@ export default function Home() {
           <h2 className="text-3xl font-bold mb-12 text-left md:text-center text-brand-sky">Why a Family App?</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-slate-100 flex flex-col">
+            <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-slate-100 flex flex-col">
               <div className="text-4xl mb-4">🧘</div>
               <h3 className="font-bold text-xl mb-3 text-brand-sky">Noise-Free Connection</h3>
               <p className="text-slate-600 flex-1">
@@ -82,7 +82,7 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-slate-100 flex flex-col">
+            <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-slate-100 flex flex-col">
               <div className="text-4xl mb-4">🕰️</div>
               <h3 className="font-bold text-xl mb-3 text-brand-sky">Organized History</h3>
               <p className="text-slate-600 flex-1">
@@ -90,7 +90,7 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-slate-100 flex flex-col">
+            <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-slate-100 flex flex-col">
               <div className="text-4xl mb-4">🫂</div>
               <h3 className="font-bold text-xl mb-3 text-brand-sky">For All Generations</h3>
               <p className="text-slate-600 flex-1">
@@ -98,7 +98,7 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-slate-100 flex flex-col">
+            <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-slate-100 flex flex-col">
               <div className="text-4xl mb-4">🚨</div>
               <h3 className="font-bold text-xl mb-3 text-brand-sky">Urgent Updates</h3>
               <p className="text-slate-600 flex-1">

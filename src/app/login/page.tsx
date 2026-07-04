@@ -24,7 +24,7 @@ export default function LoginPage() {
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-brand-sky/10 px-4">
-      <div className="bg-white p-8 rounded-2xl shadow-lg max-w-md w-full border border-slate-100">
+      <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-lg max-w-md w-full border border-slate-100">
         
         <h1 className="text-3xl font-bold text-center text-brand-sky mb-2">Family Login</h1>
         <p className="text-center text-slate-400 mb-8">Enter your email and password.</p>

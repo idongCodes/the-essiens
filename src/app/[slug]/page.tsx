@@ -67,7 +67,7 @@ export default async function ProfileRoom({ params }: { params: Promise<{ slug: 
         </div>
 
         {/* --- SECTION 1: HEADER & IDENTITY --- */}
-        <div className="pt-16 pb-8 px-8 flex flex-col items-center text-center relative">
+        <div className="pt-16 pb-8 px-4 md:px-8 flex flex-col items-center text-center relative">
           
           {/* Avatar + Badge */}
           <div className="relative mb-5 group" style={{ paddingRight: '2rem' }}>
@@ -128,7 +128,7 @@ export default async function ProfileRoom({ params }: { params: Promise<{ slug: 
         <div className="h-px w-full bg-slate-100"></div>
 
         {/* --- SECTION 2: CONTACT DETAILS --- */}
-        <div className="px-8 py-6 space-y-4 bg-slate-50/50">
+        <div className="px-4 md:px-8 py-6 space-y-4 bg-slate-50/50">
           
           {/* Email */}
           <div className="flex items-center gap-4 p-3 bg-white border border-slate-100 rounded-xl shadow-sm hover:border-brand-sky/30 transition-colors group">
@@ -155,7 +155,7 @@ export default async function ProfileRoom({ params }: { params: Promise<{ slug: 
         </div>
 
         {/* --- SECTION 3: BIO --- */}
-        <div className="px-8 pb-10 bg-slate-50/50">
+        <div className="px-4 md:px-8 pb-10 bg-slate-50/50">
           <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
             <h3 className="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-2">
               <span>👋</span> About Me

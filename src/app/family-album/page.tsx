@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
 
 import { getAlbumMedia, getUploadSignature, saveAlbumMedia, updateMediaAltText, deleteAlbumMedia, getMediaItem } from './actions'
+import { useToast } from '@/context/ToastContext'
 
 interface MediaItem {
   id: string
@@ -31,6 +32,7 @@ export default function FamilyAlbumPage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const { showToast } = useToast()
   
   // Filters
   const [filterYear, setFilterYear] = useState('')
@@ -755,7 +757,7 @@ export default function FamilyAlbumPage() {
                               e.stopPropagation()
                               const url = `${window.location.origin}/family-album?media=${selectedMedia.id}`;
                               navigator.clipboard.writeText(url);
-                              alert('Link copied to clipboard!');
+                              showToast('Link copied to clipboard!', 'success');
                             }}
                             className="p-1 hover:bg-white/20 rounded text-white/80 hover:text-white transition-colors"
                             title="Share link to this memory"

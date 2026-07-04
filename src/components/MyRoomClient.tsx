@@ -1297,7 +1297,7 @@ function MyRoomContent({ user, allUsers = [], initialPasscode = "" }: { user: an
 
           {activeTabInUrl === 'activity' && (
 
-                    <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 animate-fade-in space-y-8">
+                    <div className="bg-white p-4 md:p-8 rounded-2xl shadow-sm border border-slate-100 animate-fade-in space-y-8">
 
                        <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
 
@@ -1382,7 +1382,7 @@ function MyRoomContent({ user, allUsers = [], initialPasscode = "" }: { user: an
       )}
 
       {activeTab === 'settings' && (
-        <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 animate-fade-in space-y-8">
+        <div className="bg-white p-4 md:p-8 rounded-2xl shadow-sm border border-slate-100 animate-fade-in space-y-8">
           
           {/* 1. INVITE LINK */}
           <div className="bg-brand-sky/5 p-6 rounded-2xl border border-brand-sky/20">
@@ -1452,7 +1452,7 @@ function MyRoomContent({ user, allUsers = [], initialPasscode = "" }: { user: an
       )}
 
       {activeTab === 'admin' && isAdmin && (
-        <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 animate-fade-in space-y-12">
+        <div className="bg-white p-4 md:p-8 rounded-2xl shadow-sm border border-slate-100 animate-fade-in space-y-12">
           
           {/* APP CONFIGURATION SECTION */}
           <div>

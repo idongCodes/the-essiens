@@ -39,7 +39,7 @@ export default async function MyRoom() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 font-sans p-8">
+    <main className="min-h-screen bg-slate-50 font-sans p-4 md:p-8">
       {/* Pass all users to client */}
       <MyRoomClient user={user} allUsers={allUsers} initialPasscode={familyPasscode} />
     </main>

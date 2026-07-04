@@ -41,7 +41,7 @@ export default async function FamilyDirectory({ searchParams }: { searchParams: 
   const isAdmin = currentUser?.email === currentUserEmail
 
   return (
-    <main className="min-h-screen bg-slate-50 font-sans p-8">
+    <main className="min-h-screen bg-slate-50 font-sans p-4 md:p-8">
       <div className="max-w-6xl mx-auto mt-8">
         
         <div className="flex justify-between items-end mb-8">
