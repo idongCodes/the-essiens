@@ -55,3 +55,36 @@ export async function submitGeneralFeedback(content: string) {
     return { error: 'failed_to_send' }
   }
 }
+
+// Check if the current user needs to update their profile (missing bio or profileImage)
+export async function checkProfileStatus() {
+  const cookieStore = await cookies()
+  const userId = cookieStore.get('session_id')?.value
+
+  if (!userId) {
+    return { needsUpdate: false }
+  }
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { bio: true, profileImage: true, createdAt: true }
+    })
+
+    if (!user) {
+      return { needsUpdate: false }
+    }
+
+    // Only prompt them if their account is older than an hour to avoid interrupting first-time setup
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)
+    if (user.createdAt > oneHourAgo) {
+      return { needsUpdate: false }
+    }
+
+    const needsUpdate = !user.bio || !user.profileImage
+    return { needsUpdate }
+  } catch (error) {
+    console.error("Failed to check profile status:", error)
+    return { needsUpdate: false }
+  }
+}

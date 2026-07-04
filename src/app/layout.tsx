@@ -6,6 +6,7 @@ import FeedbackWidget from "@/components/FeedbackWidget";
 import NotificationPrompt from "@/components/NotificationPrompt";
 import NavigationTracker from "@/components/NavigationTracker";
 import DemoPrompt from "@/components/DemoPrompt";
+import ProfileCompletionPrompt from "@/components/ProfileCompletionPrompt";
 import { cookies } from "next/headers";
 import { AuthProvider } from "@/context/AuthProvider";
 import { ToastProvider } from "@/context/ToastContext";
@@ -113,6 +114,9 @@ export default async function RootLayout({
 
               {/* Demo Join Prompt */}
               {isLoggedIn && <DemoPrompt isDemoUser={isDemoUser} />}
+
+              {/* Profile Completion Prompt */}
+              {isLoggedIn && <ProfileCompletionPrompt />}
 
               {/* Global Footer */}
               <footer className="bg-slate-800 text-brand-sky py-8 text-center border-t border-slate-700">
