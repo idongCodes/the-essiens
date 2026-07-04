@@ -21,7 +21,8 @@ async function getUsers(positionFilter?: string) {
       position: true, 
       profileImage: true, 
       email: true,
-      status: true 
+      status: true,
+      bio: true
     }
   })
 }
@@ -133,6 +134,12 @@ export default async function FamilyDirectory({ searchParams }: { searchParams: 
                 <div className="mt-4 flex justify-center">
                   <FamilyPositionIcon position={user.position} size="small" />
                 </div>
+
+                {user.bio && (
+                  <p className="mt-4 text-sm text-slate-500 italic line-clamp-2 px-2">
+                    "{user.bio.match(/[^.!?]+[.!?]?/)?.[0]?.trim() || user.bio}"
+                  </p>
+                )}
               </div>
 
             </div>
