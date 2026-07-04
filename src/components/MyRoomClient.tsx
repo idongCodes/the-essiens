@@ -232,7 +232,7 @@ function MyRoomContent({ user, allUsers = [], initialPasscode = "" }: { user: an
         setProfileImage(null)
         router.refresh()
       } else {
-        showToast(result.message, "error")
+        showToast(result.message || "An error occurred.", "error")
       }
     } catch (error) {
       console.error("Profile photo upload error", error)
@@ -265,7 +265,7 @@ function MyRoomContent({ user, allUsers = [], initialPasscode = "" }: { user: an
       setIsEditingDetails(false)
       router.refresh()
     } else {
-      showToast(result.message, "error")
+      showToast(result.message || "An error occurred.", "error")
     }
   }
 
