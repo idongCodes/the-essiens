@@ -21,7 +21,8 @@ async function getUsers(positionFilter?: string) {
       position: true, 
       profileImage: true, 
       email: true,
-      status: true 
+      status: true,
+      bio: true
     }
   })
 }
@@ -76,11 +77,11 @@ export default async function FamilyDirectory({ searchParams }: { searchParams: 
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {users.map((user) => (
-            <div key={user.id} className={`bg-white p-6 rounded-2xl shadow-sm border flex items-center gap-4 hover:shadow-md transition-shadow relative group ${isAdmin && user.email === currentUserEmail ? 'border-brand-sky/30 bg-brand-sky/5' : 'border-slate-100'}`}>
+            <div key={user.id} className={`bg-white rounded-2xl shadow-sm border flex flex-col items-center text-center hover:shadow-md transition-shadow relative group overflow-hidden ${isAdmin && user.email === currentUserEmail ? 'border-brand-sky/30 bg-brand-sky/5' : 'border-slate-100'}`}>
               
               {/* ADMIN ACTION */}
               {isAdmin && user.email !== currentUserEmail && (
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="absolute top-3 left-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
                   <DeleteUserButton 
                     userId={user.id} 
                     userName={user.firstName} 
@@ -90,9 +91,9 @@ export default async function FamilyDirectory({ searchParams }: { searchParams: 
               )}
 
               {/* AVATAR + STATUS */}
-              <div className="relative">
-                <Link href={`/${user.firstName.toLowerCase()}s-room`} className="block">
-                  <div className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold shrink-0 overflow-hidden hover:opacity-80 transition-opacity ${!user.profileImage ? 'bg-brand-sky/20 text-brand-sky' : ''}`}>
+              <div className="relative w-full">
+                <Link href={`/${user.firstName.toLowerCase()}s-room`} className="block w-full">
+                  <div className={`w-full aspect-square flex items-center justify-center text-6xl font-bold bg-slate-100 transition-opacity hover:opacity-90 ${!user.profileImage ? 'bg-brand-sky/20 text-brand-sky' : ''}`}>
                     {user.profileImage ? (
                       <img src={user.profileImage} alt={user.firstName} className="w-full h-full object-cover" />
                     ) : (
@@ -101,16 +102,16 @@ export default async function FamilyDirectory({ searchParams }: { searchParams: 
                   </div>
                 </Link>
                 
-                {/* STATUS BADGE - Top Left-Right */}
-                <div className="absolute top-0 left-3">
+                {/* STATUS BADGE - Top Right */}
+                <div className="absolute top-3 right-3 z-10 shadow-sm rounded-full bg-white/80 backdrop-blur-sm p-0.5">
                   <StatusBadge status={user.status} size="normal" />
                 </div>
               </div>
 
               {/* INFO */}
-              <div className="flex flex-col min-w-0">
-                <div className="flex items-center gap-2">
-                  <Link href={`/${user.firstName.toLowerCase()}s-room`} className="font-bold text-slate-800 text-lg truncate hover:text-brand-sky transition-colors">
+              <div className="flex flex-col items-center min-w-0 w-full p-6 pt-5">
+                <div className="flex flex-wrap items-center justify-center gap-2 w-full">
+                  <Link href={`/${user.firstName.toLowerCase()}s-room`} className="font-bold text-slate-800 text-xl hover:text-brand-sky transition-colors">
                     {user.firstName} {user.lastName}
                   </Link>
                   {user.email === 'idongesit_essien@ymail.com' && (
@@ -120,19 +121,25 @@ export default async function FamilyDirectory({ searchParams }: { searchParams: 
                     </span>
                   )}
                   {user.id === sessionId && (
-                    <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-bold">YOU</span>
+                    <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-bold shrink-0">YOU</span>
                   )}
                 </div>
                 
                 {user.alias && (
-                  <Link href={`/${user.firstName.toLowerCase()}s-room`} className="text-sm text-slate-400 font-medium truncate hover:text-brand-sky transition-colors">
+                  <Link href={`/${user.firstName.toLowerCase()}s-room`} className="text-sm text-slate-400 font-medium truncate hover:text-brand-sky transition-colors mt-1">
                     @{user.alias}
                   </Link>
                 )}
                 
-                <div className="mt-1">
+                <div className="mt-4 flex justify-center">
                   <FamilyPositionIcon position={user.position} size="small" />
                 </div>
+
+                {user.bio && (
+                  <p className="mt-4 text-sm text-slate-500 italic line-clamp-2 px-2">
+                    "{user.bio.match(/[^.!?]+[.!?]?/)?.[0]?.trim() || user.bio}"
+                  </p>
+                )}
               </div>
 
             </div>
