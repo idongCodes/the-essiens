@@ -38,6 +38,13 @@ input, textarea, select, button {
   color-scheme: light;
 }
 
+/* Center all button text globally */
+button {
+  text-align: center !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+
 /* Force light scrollbars */
 ::-webkit-scrollbar {
   width: 8px;

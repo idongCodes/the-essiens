@@ -1372,11 +1372,11 @@ function MyRoomContent({ user, allUsers = [] }: { user: any, allUsers?: any[] })
             
             <div className="flex gap-2">
               <div className="flex-1 bg-white p-3 rounded-xl border border-brand-sky/20 text-slate-500 text-sm font-mono truncate select-all">
-                {typeof window !== 'undefined' ? `${window.location.origin}/register` : 'Loading link...'}
+                https://the-essiens.vercel.app/register
               </div>
               <button 
                 onClick={() => {
-                  const link = `${window.location.origin}/register`
+                  const link = `https://the-essiens.vercel.app/register`
                   navigator.clipboard.writeText(link)
                   alert("Link copied to clipboard!")
                 }}
