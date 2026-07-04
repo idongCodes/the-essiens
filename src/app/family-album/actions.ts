@@ -245,3 +245,33 @@ export async function getAlbumMedia(
   }
 }
 
+export async function getMediaItem(mediaId: string) {
+  try {
+    const item = await prisma.albumMedia.findUnique({
+      where: { id: mediaId },
+      include: {
+        uploader: {
+          select: { firstName: true, lastName: true }
+        }
+      }
+    })
+    
+    if (!item) return { success: false, data: null }
+    
+    const mappedMedia = {
+      id: item.id,
+      type: item.type,
+      src: item.url,
+      thumbnail: item.thumbnailUrl || item.url,
+      altText: item.altText,
+      uploader: item.uploader,
+      uploaderId: item.uploaderId,
+      createdAt: item.createdAt.toISOString()
+    }
+    
+    return { success: true, data: mappedMedia }
+  } catch (error) {
+    console.error('Error fetching media item:', error)
+    return { success: false, data: null }
+  }
+}
