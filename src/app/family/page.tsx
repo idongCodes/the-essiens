@@ -5,6 +5,7 @@ import FamilyPositionIcon from '@/components/FamilyPositionIcon'
 import DeleteUserButton from '@/components/DeleteUserButton'
 import { deleteUser } from './actions'
 import { prisma } from '@/lib/prisma'
+import DynamicBackButton from '@/components/DynamicBackButton'
 
 async function getUsers(positionFilter?: string) {
   const whereClause = positionFilter ? { position: positionFilter } : {}
@@ -70,9 +71,10 @@ export default async function FamilyDirectory({ searchParams }: { searchParams: 
               </Link>
             )}
           </div>
-          <Link href="/common-room" className="text-sm font-bold text-slate-400 hover:text-brand-sky transition-colors">
-            &larr; Back to Common Room
-          </Link>
+          <DynamicBackButton 
+            fallbackHref="/common-room" 
+            fallbackText="Common Room" 
+          />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

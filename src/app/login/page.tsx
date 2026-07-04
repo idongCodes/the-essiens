@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import DynamicBackButton from '@/components/DynamicBackButton'
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
 import { login } from './actions'
 
@@ -89,9 +90,12 @@ export default function LoginPage() {
           <Link href="/forgot-password" className="block text-sm text-brand-sky font-bold hover:underline">
             Forgot your password?
           </Link>
-          <Link href="/" className="block text-sm text-slate-400 hover:text-brand-sky transition-colors">
-            ← Back Home
-          </Link>
+          <DynamicBackButton 
+            fallbackHref="/" 
+            fallbackText="Home" 
+            className="block text-sm text-slate-400 hover:text-brand-sky transition-colors mx-auto"
+            icon={<>←</>}
+          />
         </div>
       </div>
     </main>
