@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { ArrowUturnLeftIcon, PhotoIcon, XMarkIcon, PencilIcon, TrashIcon, InformationCircleIcon } from '@heroicons/react/24/outline'
 import { getChatMessages, sendChatMessage, toggleReaction, editChatMessage, deleteChatMessage, getChatMedia } from '@/app/chat/actions'
+import { getOptimizedCloudinaryUrl } from '@/lib/imageUtils'
 import { pusherClient } from '@/lib/pusherClient'
 import { getUploadSignature } from '@/app/actions/cloudinary'
 import { useToast } from '@/context/ToastContext'
@@ -756,7 +757,7 @@ export default function ChatPage() {
                       {message.imageUrl && (
                         <div className="relative mb-2 rounded-lg overflow-hidden bg-slate-200/50 min-h-[100px] flex items-center justify-center">
                           <img 
-                            src={message.imageUrl} 
+                            src={getOptimizedCloudinaryUrl(message.imageUrl, { width: 400, crop: 'limit' })} 
                             alt="Shared image" 
                             className="max-w-full rounded-lg border border-white/20 shadow-sm pointer-events-none select-none" 
                           />
@@ -1190,7 +1191,7 @@ export default function ChatPage() {
                       <div key={m.id} className="aspect-square rounded-lg overflow-hidden bg-slate-100 border border-slate-200 group relative">
                         {m.imageUrl ? (
                           <img 
-                            src={m.imageUrl} 
+                            src={getOptimizedCloudinaryUrl(m.imageUrl, { width: 400, crop: 'limit' })} 
                             alt="" 
                             className="w-full h-full object-cover cursor-pointer hover:scale-110 transition-transform" 
                             onClick={() => window.open(m.imageUrl, '_blank')}

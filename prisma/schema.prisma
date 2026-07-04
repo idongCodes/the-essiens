@@ -75,6 +75,9 @@ model Post {
   likes          Like[]
   author         User            @relation("UserPosts", fields: [authorId], references: [id])
   dismissals     PostDismissal[]
+
+  @@index([createdAt(sort: Desc)])
+  @@index([authorId])
 }
 
 model Like {
@@ -102,6 +105,10 @@ model Comment {
   children  Comment[]     @relation("CommentReplies")
   post      Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
   likes     CommentLike[]
+
+  @@index([createdAt(sort: Desc)])
+  @@index([authorId])
+  @@index([postId])
 }
 
 model CommentLike {
@@ -147,6 +154,9 @@ model ChatMessage {
   replyToId String?
   replyTo   ChatMessage?  @relation("MessageReplies", fields: [replyToId], references: [id])
   replies   ChatMessage[] @relation("MessageReplies")
+
+  @@index([createdAt(sort: Desc)])
+  @@index([authorId])
 }
 
 model MessageReaction {
@@ -178,9 +188,10 @@ model AlbumMedia {
   createdAt    DateTime @default(now())
 
   uploaderId   String
-
   uploader     User     @relation(fields: [uploaderId], references: [id])
 
+  @@index([createdAt(sort: Desc)])
+  @@index([uploaderId])
 }
 
 
