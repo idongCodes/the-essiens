@@ -3,11 +3,16 @@
 import { useState, useEffect, useCallback } from 'react'
 import StatusBadge from './StatusBadge'
 import { deleteTestimonial } from '@/app/testimonials/actions'
+import { useToast } from '@/context/ToastContext'
+import { useConfirm } from '@/context/ConfirmContext'
 
 export default function TestimonialSlider({ testimonials, isUserAdmin }: { testimonials: any[], isUserAdmin: boolean }) {
   const [pageIndex, setPageIndex] = useState(0)
   const [itemsPerPage, setItemsPerPage] = useState(1) // Default to 1 for safety, updates on mount
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  
+  const { showToast } = useToast()
+  const { confirm } = useConfirm()
   
   // Swipe state
   const [touchStart, setTouchStart] = useState<number | null>(null)
@@ -45,19 +50,18 @@ export default function TestimonialSlider({ testimonials, isUserAdmin }: { testi
   }, [itemsPerPage, totalPages, pageIndex])
 
   const handleDelete = async (testimonialId: string) => {
-    if (!confirm('Are you sure you want to delete this testimonial?')) return
+    if (!(await confirm({ title: 'Delete Testimonial', message: 'Are you sure you want to delete this testimonial?' }))) return
 
     setDeletingId(testimonialId)
     try {
       const result = await deleteTestimonial(testimonialId)
       if (result.success) {
-        // Refresh the page to show updated testimonials
         window.location.reload()
       } else {
-        alert(result.message || 'Failed to delete testimonial')
+        showToast(result.message || 'Failed to delete testimonial', 'error')
       }
     } catch {
-      alert('Error deleting testimonial')
+      showToast('Error deleting testimonial', 'error')
     } finally {
       setDeletingId(null)
     }

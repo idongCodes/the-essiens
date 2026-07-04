@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { createAnnouncement, editPost } from '@/app/common-room/actions'
+import { useToast } from '@/context/ToastContext'
 
 interface AnnouncementModalProps {
   onClose: () => void
@@ -15,6 +16,7 @@ interface AnnouncementModalProps {
 
 export default function AnnouncementModal({ onClose, initialData }: AnnouncementModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const { showToast } = useToast()
   
   // Initialize state with props if editing, otherwise defaults
   const [isUrgent, setIsUrgent] = useState(initialData?.isUrgent || false)
@@ -45,7 +47,7 @@ export default function AnnouncementModal({ onClose, initialData }: Announcement
     if (result.success) {
       onClose()
     } else {
-      alert(result.message)
+      showToast(result.message || "Failed to save announcement.", "error")
     }
   }
 

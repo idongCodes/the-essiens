@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import AnnouncementModal from './AnnouncementModal'
 import { deletePost } from '@/app/common-room/actions'
 import { useRouter } from 'next/navigation'
+import { useConfirm } from '@/context/ConfirmContext'
 
 export default function AnnouncementCarousel({ 
   announcements, 
@@ -19,6 +20,7 @@ export default function AnnouncementCarousel({
   // State for modals
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingItem, setEditingItem] = useState<any | null>(null)
+  const { confirm } = useConfirm()
 
   const isAdmin = currentUserEmail === 'idongesit_essien@ymail.com'
 
@@ -36,7 +38,7 @@ export default function AnnouncementCarousel({
 
   // Handle Delete
   const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to delete this announcement?")) {
+    if (await confirm({ title: 'Delete Announcement', message: "Are you sure you want to delete this announcement?" })) {
       await deletePost(id)
       setIndex(0) // Reset index so we don't get stuck on a deleted item
       router.refresh()

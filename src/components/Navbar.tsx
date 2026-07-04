@@ -241,9 +241,8 @@ export default function Navbar() {
                     {item.subItems.map((sub: any) => {
                       if (sub.adminOnly && !isAdmin) return null
                       const subActive = pathname === sub.href || pathname.startsWith(`${sub.href.split('?')[0]}?`) && pathname.includes(sub.href.split('?')[1])
-                      // Simpler active check for sub items
-                      const isSubActive = pathname + (window.location.search || '') === sub.href
                       
+
                       return (
                         <Link
                           key={sub.name}

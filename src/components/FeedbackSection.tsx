@@ -3,11 +3,15 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { submitTestimonial } from '@/app/testimonials/actions'
+import { useToast } from '@/context/ToastContext'
+import { useConfirm } from '@/context/ConfirmContext'
 
 export default function FeedbackSection() {
   const router = useRouter()
   const [content, setContent] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const { showToast } = useToast()
+  const { confirm } = useConfirm()
 
   const handleSubmit = async () => {
     if (!content.trim()) return
@@ -18,15 +22,15 @@ export default function FeedbackSection() {
 
     if (result.success) {
       setContent('')
-      alert("Thank you! Your message has been posted.")
+      showToast("Thank you! Your message has been posted.", "success")
       router.refresh()
     } else {
       if (result.message === "Must be logged in") {
-        if (confirm("Please log in to share your love!")) {
+        if (await confirm({ title: 'Login Required', message: "Please log in to share your love!" })) {
           router.push('/login')
         }
       } else {
-        alert(result.message || "Something went wrong.")
+        showToast(result.message || "Something went wrong.", "error")
       }
     }
   }

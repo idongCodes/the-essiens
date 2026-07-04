@@ -6,6 +6,7 @@ import { addComment, toggleCommentLike, deleteComment, editComment } from '@/app
 import LikeButton from './LikeButton'
 import EmojiButton from './EmojiButton'
 import StatusBadge from './StatusBadge'
+import { useConfirm } from '@/context/ConfirmContext'
 
 export default function CommentItem({ comment, currentUserId, postId, isAdmin = false }: { comment: any, currentUserId: string, postId: string, isAdmin?: boolean }) {
   const router = useRouter()
@@ -13,6 +14,7 @@ export default function CommentItem({ comment, currentUserId, postId, isAdmin = 
   const [replyText, setReplyText] = useState('')
   const [isEditing, setIsEditing] = useState(false)
   const [editContent, setEditContent] = useState(comment.content)
+  const { confirm } = useConfirm()
 
   const isAuthor = currentUserId === comment.authorId
   const canDelete = isAuthor || isAdmin
@@ -38,7 +40,7 @@ export default function CommentItem({ comment, currentUserId, postId, isAdmin = 
   async function handleEditSubmit(e: React.FormEvent) {
     e.preventDefault(); if(!editContent.trim()) return; const res = await editComment(comment.id, editContent); if(res.success) setIsEditing(false);
   }
-  async function handleDelete() { if(confirm('Delete comment?')) await deleteComment(comment.id) }
+  async function handleDelete() { if(await confirm({ title: 'Delete Comment', message: 'Delete comment?' })) await deleteComment(comment.id) }
 
   return (
     <div className="flex gap-3 mt-4 w-full group">
