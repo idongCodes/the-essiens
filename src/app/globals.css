@@ -31,6 +31,8 @@ body {
 /* Override any dark mode styles */
 html, body {
   color-scheme: light !important;
+  min-width: 320px;
+  overflow-x: hidden;
 }
 
 /* Ensure inputs and form elements stay in light mode */

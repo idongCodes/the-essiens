@@ -1212,7 +1212,7 @@ export default function ChatPage() {
                     ))}
                   </div>
                 ) : (
-                  <div className="bg-slate-50 rounded-2xl p-8 text-center border border-dashed border-slate-200">
+                  <div className="bg-slate-50 rounded-2xl p-4 md:p-8 text-center border border-dashed border-slate-200">
                     <PhotoIcon className="w-8 h-8 text-slate-300 mx-auto mb-2" />
                     <p className="text-xs text-slate-400 italic">No media shared yet</p>
                   </div>
