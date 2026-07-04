@@ -32,9 +32,20 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://the-essiens.vercel.app"),
-  title: "The Essiens | A Private Family Connection Space",
-  description: "Stay genuinely connected with family through private updates, photos, and milestones. A safe, ad-free space designed for meaningful communication and long-lasting memories.",
+  title: "The Essiens | Our Family Space",
+  description: "A private, secure space exclusively for our family. Share photos, celebrate milestones, and stay connected without the noise of traditional social media.",
   keywords: ["family", "connection", "private social network", "The Essiens", "family updates", "safe space", "secure communication"],
+  // Explicitly tell Google NOT to index this app since it's private
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+    googleBot: {
+      index: false,
+      follow: false,
+      noimageindex: true,
+    },
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -44,9 +55,9 @@ export const metadata: Metadata = {
     telephone: false,
   },
   openGraph: {
-    title: "The Essiens | Welcome Home!",
-    description: "A private, safe space for our family to share life's precious moments, photos, and updates without the clutter of traditional social media.",
-    url: "https://the-essiens.vercel.app", // Placeholder, using project name
+    title: "The Essiens | Welcome Home",
+    description: "Our family's private space. A secure, ad-free place to share life's moments, photos, and urgent updates exclusively with family.",
+    url: "https://the-essiens.vercel.app", 
     siteName: "The Essiens",
     images: [
       {
@@ -61,8 +72,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "The Essiens | Family Connection Space",
-    description: "Simplified family communication. Share life's highlights in a secure, private room.",
+    title: "The Essiens | Our Family Space",
+    description: "Our private family connection space. No strangers, no ads, just us.",
     images: ["/images/mom_charlie_bg.jpg"],
   },
   icons: {
