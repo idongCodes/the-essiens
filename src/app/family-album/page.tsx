@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect, useCallback } from 'react'
 
-import { getAlbumMedia, getUploadSignature, saveAlbumMedia, updateMediaAltText, deleteAlbumMedia } from './actions'
+import { getAlbumMedia, getUploadSignature, saveAlbumMedia, updateMediaAltText, deleteAlbumMedia, getMediaItem } from './actions'
 
 interface MediaItem {
   id: string
@@ -67,6 +67,33 @@ export default function FamilyAlbumPage() {
 
     return () => clearTimeout(timer)
   }, [searchQuery, filterYear, filterMonth, filterHoliday])
+
+  // Deep Link Initial Load Effect
+  useEffect(() => {
+    const checkDeepLink = async () => {
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search)
+        const mediaId = params.get('media')
+        if (mediaId) {
+          const result = await getMediaItem(mediaId)
+          if (result.success && result.data) {
+            // Check if it's already in the mediaItems list
+            setMediaItems(prev => {
+              if (!prev.find(item => item.id === result.data.id)) {
+                return [result.data, ...prev]
+              }
+              return prev
+            })
+            setSelectedMedia(result.data)
+            
+            // Clean up the URL so refreshing doesn't keep opening it
+            window.history.replaceState({}, '', window.location.pathname)
+          }
+        }
+      }
+    }
+    checkDeepLink()
+  }, [])
 
   // Reset alt visibility when media changes
   useEffect(() => {
@@ -722,8 +749,24 @@ export default function FamilyAlbumPage() {
                           {selectedMedia.altText}
                         </p>
                         
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              const url = `${window.location.origin}/family-album?media=${selectedMedia.id}`;
+                              navigator.clipboard.writeText(url);
+                              alert('Link copied to clipboard!');
+                            }}
+                            className="p-1 hover:bg-white/20 rounded text-white/80 hover:text-white transition-colors"
+                            title="Share link to this memory"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
+                            </svg>
+                          </button>
+                        
                         {canEdit(selectedMedia) && (
-                          <div className="flex gap-2">
+                          <>
                             <button 
                               onClick={(e) => {
                                 e.stopPropagation()
@@ -749,8 +792,9 @@ export default function FamilyAlbumPage() {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                               </svg>
                             </button>
-                          </div>
+                          </>
                         )}
+                        </div>
                       </div>
                     )}
                  </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useOptimistic } from 'react'
+import { useState, useOptimistic, useEffect, useRef } from 'react'
 import { deletePost, editPost, toggleLike, addComment, dismissAnnouncement } from '@/app/common-room/actions'
 import CommentItem from './CommentItem'
 import LikeButton from './LikeButton'
@@ -23,6 +23,17 @@ export default function PostCard({ post, currentUserId, isAdmin = false }: { pos
   const [editIsUrgent, setEditIsUrgent] = useState(post.isUrgent || false)
   const [showComments, setShowComments] = useState(false)
   const [commentText, setCommentText] = useState('')
+  const cardRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.hash === `#post-${post.id}`) {
+      setTimeout(() => {
+        cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        cardRef.current?.classList.add('ring-2', 'ring-brand-sky', 'ring-offset-2')
+        setTimeout(() => cardRef.current?.classList.remove('ring-2', 'ring-brand-sky', 'ring-offset-2'), 2000)
+      }, 500)
+    }
+  }, [post.id])
 
   // OPTIMISTIC COMMENTS
   const [optimisticComments, addOptimisticComment] = useOptimistic(
@@ -115,7 +126,7 @@ export default function PostCard({ post, currentUserId, isAdmin = false }: { pos
   const cardStyle = displayUrgent ? "bg-red-500/5 border-red-200/50 backdrop-blur-sm shadow-md" : "bg-white border-slate-100 shadow-sm"
 
   return (
-    <div id={`post-${post.id}`} className={`p-6 rounded-xl border mb-6 transition-all hover:border-slate-300 ${cardStyle}`}>
+    <div id={`post-${post.id}`} ref={cardRef} className={`p-6 rounded-xl border mb-6 transition-all duration-500 hover:border-slate-300 ${cardStyle}`}>
       
       {/* 1. HEADER */}
       <div className="flex justify-between items-start mb-4">
@@ -233,6 +244,19 @@ export default function PostCard({ post, currentUserId, isAdmin = false }: { pos
       <div className="mt-5 pt-4 border-t border-slate-50/50 flex justify-between items-center">
         <LikeButton initialLikes={post.likes} currentUserId={currentUserId} onToggle={handleToggleLike} />
         <div className="flex items-center gap-4">
+          <button 
+            onClick={() => {
+              const url = `${window.location.origin}/common-room#post-${post.id}`;
+              navigator.clipboard.writeText(url);
+              toast.success('Link copied to clipboard!');
+            }}
+            className="flex items-center gap-2 text-slate-400 hover:text-brand-sky transition-colors font-medium text-sm group"
+            title="Share Post"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 group-hover:-translate-y-0.5 transition-transform"><path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" /></svg>
+            <span className="hidden sm:inline">Share</span>
+          </button>
+
           <button onClick={() => setShowComments(!showComments)} className="flex items-center gap-2 text-slate-400 hover:text-brand-sky transition-colors font-medium text-sm group">
             <span>{optimisticComments?.length || 0} Replies</span>
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 group-hover:-translate-y-0.5 transition-transform"><path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 0 1 .865-.501 48.172 48.172 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" /></svg>
