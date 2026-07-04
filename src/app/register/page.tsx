@@ -29,7 +29,8 @@ function RegisterContent() {
     email: '',
     password: '',
     confirmPassword: '',
-    position: ''
+    position: '',
+    passcode: ''
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -42,7 +43,7 @@ function RegisterContent() {
     setError('')
     
     // Basic validation
-    if (!formData.firstName || !formData.lastName || !formData.email || !formData.password || !formData.position) {
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.password || !formData.position || !formData.passcode) {
       setError('Please fill in all required fields.')
       return
     }
@@ -154,13 +155,23 @@ function RegisterContent() {
                 </div>
             </div>
 
-            <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Family Position <span className="text-red-500">*</span></label>
-                <input 
-                    type="text" name="position" value={formData.position} onChange={handleChange} required
-                    className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-brand-sky outline-none transition-colors"
-                    placeholder="e.g. Mercy's 3rd born son"
-                />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Family Position <span className="text-red-500">*</span></label>
+                    <input 
+                        type="text" name="position" value={formData.position} onChange={handleChange} required
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-brand-sky outline-none transition-colors"
+                        placeholder="e.g. Mercy's 3rd born son"
+                    />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Secret Passcode <span className="text-red-500">*</span></label>
+                    <input 
+                        type="password" name="passcode" value={formData.passcode} onChange={handleChange} required
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-brand-sky outline-none transition-colors"
+                        placeholder="Provided by family"
+                    />
+                </div>
             </div>
 
             <button 
