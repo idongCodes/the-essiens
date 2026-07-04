@@ -3,11 +3,15 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { submitGeneralFeedback } from '@/app/actions'
+import { useToast } from '@/context/ToastContext'
+import { useConfirm } from '@/context/ConfirmContext'
 
 export default function FeedbackWidget() {
   const [isOpen, setIsOpen] = useState(false)
   const [content, setContent] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const { showToast } = useToast()
+  const { confirm } = useConfirm()
   const router = useRouter()
 
   const handleSubmit = async () => {
@@ -23,15 +27,14 @@ export default function FeedbackWidget() {
     if (result.success) {
       setIsOpen(false)
       setContent('')
-      alert("Feedback received! We appreciate you.")
+      showToast("Feedback received! We appreciate you.", "success")
     } else if (result.error === 'unauthorized') {
-      // Logic for Guest Users
       setIsOpen(false)
-      if (confirm("Please log in to submit feedback.")) {
+      if (await confirm({ title: 'Login Required', message: "Please log in to submit feedback." })) {
         router.push('/login')
       }
     } else {
-      alert("Something went wrong. Please try again.")
+      showToast("Something went wrong. Please try again.", "error")
     }
   }
 

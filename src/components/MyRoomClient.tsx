@@ -11,8 +11,12 @@ import StatusBadge from './StatusBadge'
 import FamilyPositionIcon from './FamilyPositionIcon'
 import { compressImage } from '@/lib/imageUtils'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
+import { useToast } from '@/context/ToastContext'
+import { useConfirm } from '@/context/ConfirmContext'
 
 function MyRoomContent({ user, allUsers = [], initialPasscode = "" }: { user: any, allUsers?: any[], initialPasscode?: string }) {
+  const { showToast } = useToast()
+  const { confirm } = useConfirm()
   const router = useRouter()
   const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'activity')
@@ -93,19 +97,19 @@ function MyRoomContent({ user, allUsers = [], initialPasscode = "" }: { user: an
     if (res.success) {
       setNewUser({ firstName: '', lastName: '', alias: '', email: '', phone: '', position: '' })
       setIsAddingUser(false)
-      alert("User added successfully!")
+      showToast("User added successfully!", "success")
     } else {
       setUserError(res.message || "Error adding user.")
     }
   }
 
   const handleDeleteUserClick = async (id: string, name: string) => {
-    if (window.confirm(`Are you absolutely sure you want to permanently delete ${name}? This cannot be undone.`)) {
+    if (await confirm({ title: "Delete User", message: `Are you absolutely sure you want to permanently delete ${name}? This cannot be undone.` })) {
       try {
         await deleteUser(id)
-        alert(`${name} was deleted.`)
+        showToast(`${name} was deleted.`, "success")
       } catch (err: any) {
-        alert(err.message || "Failed to delete user.")
+        showToast(err.message || "Failed to delete user.", "error")
       }
     }
   }
@@ -128,6 +132,8 @@ function MyRoomContent({ user, allUsers = [], initialPasscode = "" }: { user: an
     })
   }
 
+  const [shareCopied, setShareCopied] = useState(false)
+
   const handleEditUserSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmittingUser(true)
@@ -141,7 +147,7 @@ function MyRoomContent({ user, allUsers = [], initialPasscode = "" }: { user: an
     
     if (res.success) {
       setEditingUserId(null)
-      alert("User updated successfully!")
+      showToast("User updated successfully!", "success")
     } else {
       setUserError(res.message || "Error updating user.")
     }
@@ -158,9 +164,9 @@ function MyRoomContent({ user, allUsers = [], initialPasscode = "" }: { user: an
     setIsSavingPasscode(false)
     if (res.success) {
       setIsEditingPasscode(false)
-      alert("Passcode updated successfully!")
+      showToast("Passcode updated successfully!", "success")
     } else {
-      alert(res.message || "Failed to update passcode.")
+      showToast(res.message || "Failed to update passcode.", "error")
     }
   }
 
@@ -182,7 +188,7 @@ function MyRoomContent({ user, allUsers = [], initialPasscode = "" }: { user: an
         setPreviewUrl(URL.createObjectURL(compressed))
       } catch (err) {
         console.error("Compression failed", err)
-        alert("Failed to process image. Please try another one.")
+        showToast("Failed to process image. Please try another one.", "error")
       } finally {
         setIsCompressing(false)
       }
@@ -222,15 +228,15 @@ function MyRoomContent({ user, allUsers = [], initialPasscode = "" }: { user: an
       const result = await updateProfilePhoto(formData)
 
       if (result.success) {
-        alert("Profile photo updated.")
+        showToast("Profile photo updated.", "success")
         setProfileImage(null)
         router.refresh()
       } else {
-        alert(result.message)
+        showToast(result.message, "error")
       }
     } catch (error) {
       console.error("Profile photo upload error", error)
-      alert("Failed to upload profile photo.")
+      showToast("Failed to upload profile photo.", "error")
     } finally {
       setIsSavingPhoto(false)
     }
@@ -259,7 +265,7 @@ function MyRoomContent({ user, allUsers = [], initialPasscode = "" }: { user: an
       setIsEditingDetails(false)
       router.refresh()
     } else {
-      alert(result.message)
+      showToast(result.message, "error")
     }
   }
 
@@ -1395,7 +1401,7 @@ function MyRoomContent({ user, allUsers = [], initialPasscode = "" }: { user: an
                 onClick={() => {
                   const link = `https://the-essiens.vercel.app/register`
                   navigator.clipboard.writeText(link)
-                  alert("Link copied to clipboard!")
+                  showToast("Link copied to clipboard!", "success")
                 }}
                 className="bg-brand-sky text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-sky-500 transition-colors shrink-0 flex items-center gap-2"
               >

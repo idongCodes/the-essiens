@@ -54,6 +54,9 @@ export async function deleteUser(userId: string) {
 
     // Delete Posts (comments and likes cascade)
     await tx.post.deleteMany({ where: { authorId: userId } })
+    
+    // Delete AlbumMedia
+    await tx.albumMedia.deleteMany({ where: { uploaderId: userId } })
 
     // 3. Finally delete the User
     await tx.user.delete({ where: { id: userId } })
