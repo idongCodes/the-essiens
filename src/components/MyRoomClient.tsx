@@ -1448,6 +1448,37 @@ function MyRoomContent({ user, allUsers = [], initialPasscode = "" }: { user: an
               </button>
             </div>
           </div>
+          {/* 3. DANGER ZONE */}
+          <div className="mt-12 pt-8 border-t border-red-100">
+            <h3 className="text-xl font-bold text-red-600 mb-2 flex items-center gap-2">
+              <span>⚠️</span> Danger Zone
+            </h3>
+            <div className="bg-red-50 p-6 rounded-2xl border border-red-200 flex flex-col md:flex-row items-center justify-between gap-4">
+              <div>
+                <h4 className="font-bold text-red-700">Delete Account</h4>
+                <p className="text-sm text-red-600/80 mt-1">
+                  Once you delete your account, there is no going back. All your posts, photos, and messages will be permanently deleted.
+                </p>
+              </div>
+              
+              <button
+                onClick={async () => {
+                  if (await confirm({ title: 'Delete Account', message: 'Are you absolutely sure? This will permanently delete your account, posts, messages, and photos. This cannot be undone.', confirmText: 'Yes, Delete My Account', type: 'danger' })) {
+                    try {
+                      await deleteUser(user.id);
+                      showToast('Account deleted successfully.', 'success');
+                      router.push('/login');
+                    } catch (e: any) {
+                      showToast(e.message || 'Failed to delete account.', 'error');
+                    }
+                  }
+                }}
+                className="px-6 py-3 rounded-full font-bold text-sm transition-all shadow-sm shrink-0 bg-white text-red-600 border border-red-200 hover:bg-red-600 hover:text-white"
+              >
+                Delete Account
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

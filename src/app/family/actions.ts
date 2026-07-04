@@ -18,8 +18,8 @@ export async function deleteUser(userId: string) {
     select: { email: true }
   })
 
-  if (currentUser?.email !== 'idongesit_essien@ymail.com') {
-    throw new Error('Unauthorized: Only admin can delete users')
+  if (currentUser?.email !== 'idongesit_essien@ymail.com' && currentUserId !== userId) {
+    throw new Error('Unauthorized: You can only delete your own account unless you are an admin')
   }
 
   // Transaction to clean up data
@@ -62,5 +62,12 @@ export async function deleteUser(userId: string) {
     await tx.user.delete({ where: { id: userId } })
   })
 
+  if (currentUserId === userId) {
+    cookieStore.delete('session_id')
+    cookieStore.delete('user_session')
+  }
+
+  revalidatePath('/')
   revalidatePath('/family')
+  revalidatePath('/my-room')
 }
