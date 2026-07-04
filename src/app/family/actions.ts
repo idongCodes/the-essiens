@@ -4,7 +4,7 @@ import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 
-export async function deleteUser(userId: string) {
+export async function deleteUser(userId: string, passcode?: string) {
   const cookieStore = await cookies()
   const currentUserId = cookieStore.get('session_id')?.value
 
@@ -18,8 +18,23 @@ export async function deleteUser(userId: string) {
     select: { email: true }
   })
 
-  if (currentUser?.email !== 'idongesit_essien@ymail.com' && currentUserId !== userId) {
+  const isAdmin = currentUser?.email === 'idongesit_essien@ymail.com'
+
+  if (!isAdmin && currentUserId !== userId) {
     throw new Error('Unauthorized: You can only delete your own account unless you are an admin')
+  }
+
+  if (currentUserId === userId) {
+    // If self-deleting, require the current family passcode
+    if (!passcode) {
+      throw new Error('Passcode is required to delete your account')
+    }
+    const config = await prisma.appConfig.findUnique({ where: { id: 'global' } })
+    const actualPasscode = config?.familyPasscode || 'ESSIEN2026'
+    
+    if (passcode !== actualPasscode) {
+      throw new Error('Incorrect family passcode')
+    }
   }
 
   // Transaction to clean up data

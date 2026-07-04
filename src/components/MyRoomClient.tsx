@@ -134,6 +134,11 @@ function MyRoomContent({ user, allUsers = [], initialPasscode = "" }: { user: an
 
   const [shareCopied, setShareCopied] = useState(false)
 
+  // --- DELETE ACCOUNT STATE ---
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false)
+  const [deletePasscode, setDeletePasscode] = useState('')
+  const [isDeleting, setIsDeleting] = useState(false)
+
   const handleEditUserSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmittingUser(true)
@@ -1453,30 +1458,79 @@ function MyRoomContent({ user, allUsers = [], initialPasscode = "" }: { user: an
             <h3 className="text-xl font-bold text-red-600 mb-2 flex items-center gap-2">
               <span>⚠️</span> Danger Zone
             </h3>
-            <div className="bg-red-50 p-6 rounded-2xl border border-red-200 flex flex-col md:flex-row items-center justify-between gap-4">
-              <div>
-                <h4 className="font-bold text-red-700">Delete Account</h4>
-                <p className="text-sm text-red-600/80 mt-1">
-                  Once you delete your account, there is no going back. All your posts, photos, and messages will be permanently deleted.
-                </p>
-              </div>
-              
-              <button
-                onClick={async () => {
-                  if (await confirm({ title: 'Delete Account', message: 'Are you absolutely sure? This will permanently delete your account, posts, messages, and photos. This cannot be undone.', confirmText: 'Yes, Delete My Account', type: 'danger' })) {
-                    try {
-                      await deleteUser(user.id);
-                      showToast('Account deleted successfully.', 'success');
-                      router.push('/login');
-                    } catch (e: any) {
-                      showToast(e.message || 'Failed to delete account.', 'error');
-                    }
-                  }
-                }}
-                className="px-6 py-3 rounded-full font-bold text-sm transition-all shadow-sm shrink-0 bg-white text-red-600 border border-red-200 hover:bg-red-600 hover:text-white"
-              >
-                Delete Account
-              </button>
+            <div className="bg-red-50 p-6 rounded-2xl border border-red-200 flex flex-col md:flex-row items-center justify-between gap-4 transition-all">
+              {!isDeletingAccount ? (
+                <>
+                  <div>
+                    <h4 className="font-bold text-red-700">Delete Account</h4>
+                    <p className="text-sm text-red-600/80 mt-1">
+                      Once you delete your account, there is no going back. All your posts, photos, and messages will be permanently deleted.
+                    </p>
+                  </div>
+                  
+                  <button
+                    onClick={async () => {
+                      if (await confirm({ title: 'Delete Account', message: 'Are you absolutely sure? This will permanently delete your account, posts, messages, and photos. This cannot be undone.', confirmText: 'Yes, Delete My Account', type: 'danger' })) {
+                        setIsDeletingAccount(true)
+                      }
+                    }}
+                    className="px-6 py-3 rounded-full font-bold text-sm transition-all shadow-sm shrink-0 bg-white text-red-600 border border-red-200 hover:bg-red-600 hover:text-white"
+                  >
+                    Delete Account
+                  </button>
+                </>
+              ) : (
+                <div className="w-full flex flex-col gap-4 animate-in slide-in-from-right-4 duration-200">
+                  <div>
+                    <h4 className="font-bold text-red-700">Confirm Deletion</h4>
+                    <p className="text-sm text-red-600/80 mt-1">
+                      Please enter the family passcode to verify this action.
+                    </p>
+                  </div>
+                  <div className="flex flex-col md:flex-row gap-3 w-full">
+                    <input 
+                      type="password"
+                      placeholder="Family Passcode"
+                      value={deletePasscode}
+                      onChange={e => setDeletePasscode(e.target.value)}
+                      className="flex-1 p-3 rounded-xl border border-red-200 focus:ring-2 focus:ring-red-500 outline-none w-full"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          setIsDeletingAccount(false)
+                          setDeletePasscode('')
+                        }}
+                        disabled={isDeleting}
+                        className="px-6 py-3 rounded-xl font-bold text-sm bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 disabled:opacity-50"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={async () => {
+                          if (!deletePasscode) {
+                            showToast("Please enter the family passcode", "error")
+                            return
+                          }
+                          setIsDeleting(true)
+                          try {
+                            await deleteUser(user.id, deletePasscode)
+                            showToast('Account deleted successfully.', 'success')
+                            router.push('/login')
+                          } catch (e: any) {
+                            showToast(e.message || 'Failed to delete account.', 'error')
+                            setIsDeleting(false)
+                          }
+                        }}
+                        disabled={isDeleting}
+                        className="px-6 py-3 rounded-xl font-bold text-sm bg-red-600 text-white shadow-md hover:bg-red-700 disabled:opacity-50 min-w-[120px]"
+                      >
+                        {isDeleting ? 'Deleting...' : 'Verify & Delete'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
