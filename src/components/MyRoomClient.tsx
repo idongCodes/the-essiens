@@ -82,7 +82,7 @@ function MyRoomContent({ user, allUsers = [], initialPasscode = "" }: { user: an
   const [isAddingUser, setIsAddingUser] = useState(false)
   const [isSubmittingUser, setIsSubmittingUser] = useState(false)
   const [userError, setUserError] = useState('')
-  const [newUser, setNewUser] = useState({ firstName: '', lastName: '', alias: '', email: '', phone: '', position: '' })
+  const [newUser, setNewUser] = useState({ firstName: '', lastName: '', alias: '', email: '', phone: '', position: '', password: '', confirmPassword: '' })
 
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -92,10 +92,16 @@ function MyRoomContent({ user, allUsers = [], initialPasscode = "" }: { user: an
     const formData = new FormData()
     Object.entries(newUser).forEach(([k, v]) => formData.append(k, v))
     
+    if (newUser.password !== newUser.confirmPassword) {
+      setUserError("Passwords do not match.")
+      setIsSubmittingUser(false)
+      return
+    }
+
     const res = await adminAddUser(formData)
     setIsSubmittingUser(false)
     if (res.success) {
-      setNewUser({ firstName: '', lastName: '', alias: '', email: '', phone: '', position: '' })
+      setNewUser({ firstName: '', lastName: '', alias: '', email: '', phone: '', position: '', password: '', confirmPassword: '' })
       setIsAddingUser(false)
       showToast("User added successfully!", "success")
     } else {
@@ -1703,6 +1709,16 @@ function MyRoomContent({ user, allUsers = [], initialPasscode = "" }: { user: an
                     <input 
                       type="text" placeholder="Relation to Mercy" required
                       value={newUser.position} onChange={e => setNewUser({...newUser, position: e.target.value})}
+                      className="p-3 rounded-lg border focus:ring-2 focus:ring-brand-sky outline-none w-full"
+                    />
+                    <input 
+                      type="password" placeholder="Password" required
+                      value={newUser.password} onChange={e => setNewUser({...newUser, password: e.target.value})}
+                      className="p-3 rounded-lg border focus:ring-2 focus:ring-brand-sky outline-none w-full"
+                    />
+                    <input 
+                      type="password" placeholder="Confirm Password" required
+                      value={newUser.confirmPassword} onChange={e => setNewUser({...newUser, confirmPassword: e.target.value})}
                       className="p-3 rounded-lg border focus:ring-2 focus:ring-brand-sky outline-none w-full"
                     />
                   </div>
