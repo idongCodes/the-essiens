@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, Suspense } from 'react'
-import { updateProfilePhoto, updateProfileDetails, getUserActivity, adminAddUser, adminUpdateUser } from '@/app/my-room/actions'
+import { updateProfilePhoto, updateProfileDetails, getUserActivity, adminAddUser, adminUpdateUser, adminUpdatePasscode } from '@/app/my-room/actions'
 import { deleteUser } from '@/app/family/actions'
 import { getUploadSignature } from '@/app/actions/cloudinary'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -12,7 +12,7 @@ import FamilyPositionIcon from './FamilyPositionIcon'
 import { compressImage } from '@/lib/imageUtils'
 import { usePushNotifications } from '@/hooks/usePushNotifications'
 
-function MyRoomContent({ user, allUsers = [] }: { user: any, allUsers?: any[] }) {
+function MyRoomContent({ user, allUsers = [], initialPasscode = "" }: { user: any, allUsers?: any[], initialPasscode?: string }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'activity')
@@ -144,6 +144,23 @@ function MyRoomContent({ user, allUsers = [] }: { user: any, allUsers?: any[] })
       alert("User updated successfully!")
     } else {
       setUserError(res.message || "Error updating user.")
+    }
+  }
+
+  // --- ADMIN PASSCODE STATE ---
+  const [passcode, setPasscode] = useState(initialPasscode)
+  const [isEditingPasscode, setIsEditingPasscode] = useState(false)
+  const [isSavingPasscode, setIsSavingPasscode] = useState(false)
+
+  const handleSavePasscode = async () => {
+    setIsSavingPasscode(true)
+    const res = await adminUpdatePasscode(passcode)
+    setIsSavingPasscode(false)
+    if (res.success) {
+      setIsEditingPasscode(false)
+      alert("Passcode updated successfully!")
+    } else {
+      alert(res.message || "Failed to update passcode.")
     }
   }
 
@@ -1431,6 +1448,60 @@ function MyRoomContent({ user, allUsers = [] }: { user: any, allUsers?: any[] })
       {activeTab === 'admin' && isAdmin && (
         <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 animate-fade-in space-y-12">
           
+          {/* APP CONFIGURATION SECTION */}
+          <div>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                <span>⚙️</span> App Configuration
+              </h3>
+            </div>
+            
+            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h4 className="font-bold text-brand-sky">Family Passcode</h4>
+                <p className="text-sm text-slate-500 mt-1">This is the code required to register a new account.</p>
+              </div>
+              
+              <div className="flex items-center gap-3">
+                {isEditingPasscode ? (
+                  <>
+                    <input 
+                      type="text" 
+                      value={passcode} 
+                      onChange={e => setPasscode(e.target.value)} 
+                      className="p-2 rounded border border-slate-300 focus:ring-2 focus:ring-brand-sky outline-none w-32"
+                    />
+                    <button 
+                      onClick={handleSavePasscode}
+                      disabled={isSavingPasscode}
+                      className="bg-brand-sky text-white px-4 py-2 rounded-lg text-sm font-bold shadow hover:bg-sky-500"
+                    >
+                      {isSavingPasscode ? 'Saving...' : 'Save'}
+                    </button>
+                    <button 
+                      onClick={() => { setIsEditingPasscode(false); setPasscode(initialPasscode); }}
+                      className="bg-slate-200 text-slate-600 px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-300"
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div className="bg-white px-4 py-2 rounded border border-slate-200 font-mono text-lg tracking-wider font-bold text-slate-700">
+                      {passcode}
+                    </div>
+                    <button 
+                      onClick={() => setIsEditingPasscode(true)}
+                      className="text-brand-sky text-sm font-bold hover:underline"
+                    >
+                      Edit
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* USER MANAGEMENT SECTION */}
           <div>
             <div className="flex justify-between items-center mb-6">
@@ -1609,10 +1680,10 @@ function MyRoomContent({ user, allUsers = [] }: { user: any, allUsers?: any[] })
   )
 }
 
-export default function MyRoomClient(props: any) {
+export default function MyRoomClient({ user, allUsers = [], initialPasscode = "" }: { user: any, allUsers?: any[], initialPasscode?: string }) {
   return (
-    <Suspense fallback={<div className="text-center py-20 text-slate-400">Loading your room...</div>}>
-      <MyRoomContent {...props} />
+    <Suspense fallback={<div className="min-h-[50vh] flex justify-center items-center"><div className="w-8 h-8 border-4 border-brand-sky border-t-transparent rounded-full animate-spin"></div></div>}>
+      <MyRoomContent user={user} allUsers={allUsers} initialPasscode={initialPasscode} />
     </Suspense>
   )
 }

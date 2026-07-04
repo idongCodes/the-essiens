@@ -17,11 +17,11 @@ export async function registerUser(formData: FormData) {
   const position = formData.get('position') as string 
   const passcode = formData.get('passcode') as string
 
-  const validPasscode = process.env.FAMILY_PASSCODE
-  if (!validPasscode) {
-    console.error("CRITICAL: FAMILY_PASSCODE is not set in environment variables.")
-    return { success: false, message: "Server configuration error. Please contact admin." }
-  }
+  const config = await prisma.appConfig.findUnique({
+    where: { id: 'global' }
+  })
+  
+  const validPasscode = config?.familyPasscode || "ESSIEN2026"
 
   if (passcode !== validPasscode) {
     return { success: false, message: "Incorrect Family Passcode. Please check the group chat." }

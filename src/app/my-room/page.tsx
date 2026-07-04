@@ -24,17 +24,24 @@ export default async function MyRoom() {
   }
   
   let allUsers: any[] = []
+  let familyPasscode = ""
+
   if (user.email === 'idongesit_essien@ymail.com') {
       allUsers = await prisma.user.findMany({
           orderBy: { createdAt: 'asc' },
           select: { id: true, firstName: true, lastName: true, alias: true, email: true, position: true, profileImage: true }
       })
+      
+      const config = await prisma.appConfig.findUnique({
+        where: { id: 'global' }
+      })
+      familyPasscode = config?.familyPasscode || "ESSIEN2026"
   }
 
   return (
     <main className="min-h-screen bg-slate-50 font-sans p-8">
       {/* Pass all users to client */}
-      <MyRoomClient user={user} allUsers={allUsers} />
+      <MyRoomClient user={user} allUsers={allUsers} initialPasscode={familyPasscode} />
     </main>
   )
 }
