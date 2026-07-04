@@ -47,3 +47,17 @@ export async function compressImage(file: File): Promise<File> {
     reader.onerror = (error) => reject(error)
   })
 }
+
+export function getOptimizedCloudinaryUrl(url: string, { width, height, crop = 'fill' }: { width?: number, height?: number, crop?: string } = {}) {
+  if (!url || !url.includes('res.cloudinary.com')) return url;
+  
+  const parts = url.split('/upload/');
+  if (parts.length !== 2) return url;
+  
+  const transforms = ['q_auto', 'f_auto'];
+  if (width) transforms.push(`w_${width}`);
+  if (height) transforms.push(`h_${height}`);
+  if (width || height) transforms.push(`c_${crop}`);
+  
+  return `${parts[0]}/upload/${transforms.join(',')}/${parts[1]}`;
+}

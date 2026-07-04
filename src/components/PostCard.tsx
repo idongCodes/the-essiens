@@ -8,6 +8,7 @@ import EmojiButton from './EmojiButton'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/context/ToastContext'
 import { useConfirm } from '@/context/ConfirmContext'
+import { getOptimizedCloudinaryUrl } from '@/lib/imageUtils'
 
 export default function PostCard({ post, currentUserId, isAdmin = false }: { post: any, currentUserId: string, isAdmin?: boolean }) {
   const router = useRouter()
@@ -215,7 +216,7 @@ export default function PostCard({ post, currentUserId, isAdmin = false }: { pos
           <p className="text-slate-700 leading-relaxed text-base whitespace-pre-wrap mb-3">{post.content}</p>
           {post.imageUrl && (
             <div className="mt-3 rounded-lg overflow-hidden border border-slate-100">
-              <img src={post.imageUrl} alt="Post attachment" className="w-full max-h-96 object-cover bg-slate-50" loading="lazy"/>
+              <img src={getOptimizedCloudinaryUrl(post.imageUrl, { width: 800, crop: 'limit' })} alt="Post attachment" className="w-full max-h-96 object-cover bg-slate-50" loading="lazy"/>
             </div>
           )}
           {post.videoUrl && (

@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState, useEffect, useCallback } from 'react'
+import { getOptimizedCloudinaryUrl } from '@/lib/imageUtils'
 
 import { getAlbumMedia, getUploadSignature, saveAlbumMedia, updateMediaAltText, deleteAlbumMedia, getMediaItem } from './actions'
 import { useToast } from '@/context/ToastContext'
@@ -538,7 +539,7 @@ export default function FamilyAlbumPage() {
               </div>
             ) : (
               <img 
-                src={item.src} 
+                src={getOptimizedCloudinaryUrl(item.src, { width: 400, height: 400 })} 
                 alt={`Family memory ${item.id}`}
                 className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 ease-in-out"
                 loading="lazy"
@@ -699,7 +700,7 @@ export default function FamilyAlbumPage() {
                   />
                ) : (
                   <img 
-                    src={selectedMedia.src} 
+                    src={getOptimizedCloudinaryUrl(selectedMedia.src, { width: 1200, crop: 'limit' })} 
                     alt="Full screen view"
                     className="max-w-full max-h-[80vh] object-contain"
                   />
