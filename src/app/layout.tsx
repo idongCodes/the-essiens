@@ -4,6 +4,7 @@ import Navbar from "@/components/Navbar";
 import AutoLogout from "@/components/AutoLogout";
 import FeedbackWidget from "@/components/FeedbackWidget";
 import NotificationPrompt from "@/components/NotificationPrompt";
+import NavigationTracker from "@/components/NavigationTracker";
 import { cookies } from "next/headers";
 import { AuthProvider } from "@/context/AuthProvider";
 import { ToastProvider } from "@/context/ToastContext";
@@ -70,7 +71,7 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}>
-        
+        <NavigationTracker />
         <AuthProvider initialSession={isLoggedIn}>
           <ToastProvider>
             <ConfirmProvider>

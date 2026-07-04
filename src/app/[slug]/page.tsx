@@ -3,6 +3,7 @@ import Link from 'next/link'
 import StatusBadge from '@/components/StatusBadge'
 import FamilyPositionIcon from '@/components/FamilyPositionIcon'
 import { prisma } from '@/lib/prisma'
+import DynamicBackButton from '@/components/DynamicBackButton'
 
 export default async function ProfileRoom({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
@@ -55,15 +56,14 @@ export default async function ProfileRoom({ params }: { params: Promise<{ slug: 
         
         {/* Navigation Back Link */}
         <div className="absolute top-6 left-6 z-20">
-          <Link 
-            href="/family" 
+          <DynamicBackButton 
+            fallbackHref="/family" 
+            fallbackText="Directory"
             className="flex items-center gap-1 text-slate-400 hover:text-brand-sky transition-colors text-xs font-bold uppercase tracking-wider"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+            icon={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
               <path fillRule="evenodd" d="M17 10a.75.75 0 0 1-.75.75H5.612l4.158 3.96a.75.75 0 1 1-1.04 1.08l-5.5-5.25a.75.75 0 0 1 0-1.08l5.5-5.25a.75.75 0 1 1 1.04 1.08L5.612 9.25H16.25A.75.75 0 0 1 17 10Z" clipRule="evenodd" />
-            </svg>
-            Directory
-          </Link>
+            </svg>}
+          />
         </div>
 
         {/* --- SECTION 1: HEADER & IDENTITY --- */}
