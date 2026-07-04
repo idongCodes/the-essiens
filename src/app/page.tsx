@@ -60,53 +60,63 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-20 px-6 bg-white">
+      <section className="pt-20 pb-10 px-6 bg-white">
         <div className="max-w-3xl mx-auto text-left md:text-center">
-          <h2 className="text-3xl font-bold mb-8 text-brand-sky">The Mission</h2>
-          <p className="text-lg text-left text-slate-600 leading-relaxed mb-8">
-            In the age of endless notifications and cluttered group chats, staying connected shouldn&apos;t be complicated.
-            <strong className="text-brand-sky"> The Essiens</strong> simplifies family communication. 
-            Share a quick video, snap a photo, or celebrate an accomplishment—all in one place, without sorting through multiple chats.
+          <h2 className="text-3xl font-bold mb-6 text-brand-sky">The Mission</h2>
+          <p className="text-lg text-left md:text-center text-slate-600 leading-relaxed">
+            Our mission is to create a digital sanctuary for our family. In a world full of chaotic group chats and public social media feeds, <strong className="text-brand-sky">The Essiens</strong> offers a quiet, private space where every post is intentional, our shared memories are preserved, and every generation feels right at home. It's not about connecting with the world—it's about staying closely connected with each other.
           </p>
         </div>
       </section>
 
-      <section className="bg-white py-20 px-6">
+      <section className="bg-white pt-10 pb-20 px-6">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold mb-12 text-left md:text-center text-brand-sky">Highlights</h2>
+          <h2 className="text-3xl font-bold mb-12 text-left md:text-center text-brand-sky">Why a Family App?</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-slate-50">
-              <div className="text-4xl mb-4">🏡</div>
-              <h3 className="font-bold text-xl mb-3 text-brand-sky">The Common Room</h3>
-              <p className="text-slate-600">
-                One central hub for updates. Post once, and everyone sees it. No one gets left out.
+            <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-slate-100 flex flex-col">
+              <div className="text-4xl mb-4">🧘</div>
+              <h3 className="font-bold text-xl mb-3 text-brand-sky">Noise-Free Connection</h3>
+              <p className="text-slate-600 flex-1">
+                Escape the ads, news, and clutter of traditional social media. A focused environment built exclusively for intentional family engagement.
               </p>
             </div>
 
-            <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-slate-50">
-              <div className="text-4xl mb-4">💬</div>
-              <h3 className="font-bold text-xl mb-3 text-brand-sky">Stay Connected</h3>
-              <p className="text-slate-600">
-                Effortlessly keep our busy family in touch. Share life&apos;s moments as they happen without the pressure of scheduling.
+            <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-slate-100 flex flex-col">
+              <div className="text-4xl mb-4">🕰️</div>
+              <h3 className="font-bold text-xl mb-3 text-brand-sky">Organized History</h3>
+              <p className="text-slate-600 flex-1">
+                Stop losing photos in endless group chats. Our dedicated Album and Feed act as a digital time capsule that is easy to revisit anytime.
               </p>
             </div>
 
-            <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-slate-50">
-              <div className="text-4xl mb-4">⚡</div>
-              <h3 className="font-bold text-xl mb-3 text-brand-sky">Live Chat</h3>
-              <p className="text-slate-600">
-                Real-time conversations for those "right now" moments. Connect instantly with any family member currently online.
+            <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-slate-100 flex flex-col">
+              <div className="text-4xl mb-4">🫂</div>
+              <h3 className="font-bold text-xl mb-3 text-brand-sky">For All Generations</h3>
+              <p className="text-slate-600 flex-1">
+                A simple, safe space where grandparents and young adults alike can share comfortably, knowing exactly who is in the audience.
               </p>
             </div>
 
-            <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-slate-50">
-              <div className="text-4xl mb-4">🔒</div>
-              <h3 className="font-bold text-xl mb-3 text-brand-sky">Family Only</h3>
-              <p className="text-slate-600">
-                A private, safe space dedicated exclusively to our family. No public feeds or strangers allowed.
+            <div className="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-slate-100 flex flex-col">
+              <div className="text-4xl mb-4">🚨</div>
+              <h3 className="font-bold text-xl mb-3 text-brand-sky">Urgent Updates</h3>
+              <p className="text-slate-600 flex-1">
+                Cut through the bystander effect of large chats. Pin critical news like travel arrivals or health updates so no one misses out.
               </p>
             </div>
+          </div>
+
+          <div className="mt-16 text-center">
+            <Link 
+              href="/register"
+              className="inline-flex bg-brand-sky text-white px-10 py-4 rounded-full font-bold shadow-lg hover:bg-sky-500 hover:scale-105 transition-all text-xl items-center justify-center gap-2"
+            >
+              Join the Family
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </Link>
           </div>
         </div>
       </section>
