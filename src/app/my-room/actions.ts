@@ -172,6 +172,8 @@ export async function getUserActivity() {
   }
 }
 
+import bcrypt from 'bcryptjs'
+
 // --- 5. ADMIN ADD USER ---
 export async function adminAddUser(formData: FormData) {
   const cookieStore = await cookies()
@@ -191,8 +193,9 @@ export async function adminAddUser(formData: FormData) {
   const email = formData.get('email') as string
   const phone = formData.get('phone') as string
   const position = formData.get('position') as string
+  const password = formData.get('password') as string
 
-  if (!firstName || !lastName || !email || !position) {
+  if (!firstName || !lastName || !email || !position || !password) {
     return { success: false, message: "Missing required fields." }
   }
 
@@ -202,8 +205,9 @@ export async function adminAddUser(formData: FormData) {
   }
 
   try {
+    const hashedPassword = await bcrypt.hash(password, 10)
     const newUser = await prisma.user.create({
-      data: { firstName, lastName, alias, email, phone, position }
+      data: { firstName, lastName, alias, email, phone, position, password: hashedPassword }
     })
     
     // Notify others

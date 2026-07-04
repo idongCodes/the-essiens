@@ -25,6 +25,7 @@ model User {
   status           String?
   isAdmin          Boolean           @default(false)
   lastProfileUpdate DateTime?
+  deleteScheduledAt DateTime?
   createdAt        DateTime          @default(now())
   chatMessages     ChatMessage[]     @relation("UserChatMessages")
   messageReactions MessageReaction[]
