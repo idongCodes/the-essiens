@@ -42,6 +42,9 @@ export async function login(formData: FormData) {
       path: '/',
     })
 
+    // Remove demo cookie if it exists
+    cookieStore.delete('is_demo')
+
     return { success: true }
   } catch (error: any) {
     console.error('Login error:', error)
