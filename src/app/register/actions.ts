@@ -13,8 +13,19 @@ export async function registerUser(formData: FormData) {
   const phone = formData.get('phone') as string
   const password = formData.get('password') as string
   
-  // 1. GRAB THE POSITION FROM THE FORM
+  // 1. GRAB THE POSITION AND PASSCODE FROM THE FORM
   const position = formData.get('position') as string 
+  const passcode = formData.get('passcode') as string
+
+  const validPasscode = process.env.FAMILY_PASSCODE
+  if (!validPasscode) {
+    console.error("CRITICAL: FAMILY_PASSCODE is not set in environment variables.")
+    return { success: false, message: "Server configuration error. Please contact admin." }
+  }
+
+  if (passcode !== validPasscode) {
+    return { success: false, message: "Incorrect Family Passcode. Please check the group chat." }
+  }
 
   if (!password || password.length < 6) {
     return { success: false, message: "Password must be at least 6 characters." }
