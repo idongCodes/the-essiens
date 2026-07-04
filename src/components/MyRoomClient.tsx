@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, Suspense } from 'react'
 import { updateProfilePhoto, updateProfileDetails, getUserActivity, adminAddUser, adminUpdateUser, adminUpdatePasscode } from '@/app/my-room/actions'
-import { deleteUser } from '@/app/family/actions'
+import { deleteUser, verifyPasscode } from '@/app/family/actions'
 import { getUploadSignature } from '@/app/actions/cloudinary'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link' // <--- 1. Import Link
@@ -138,6 +138,7 @@ function MyRoomContent({ user, allUsers = [], initialPasscode = "" }: { user: an
   const [isDeletingAccount, setIsDeletingAccount] = useState(false)
   const [deletePasscode, setDeletePasscode] = useState('')
   const [isDeleting, setIsDeleting] = useState(false)
+  const [show72HourWarning, setShow72HourWarning] = useState(false)
 
   const handleEditUserSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -1514,18 +1515,24 @@ function MyRoomContent({ user, allUsers = [], initialPasscode = "" }: { user: an
                           }
                           setIsDeleting(true)
                           try {
-                            await deleteUser(user.id, deletePasscode)
-                            showToast('Account deleted successfully.', 'success')
-                            router.push('/login')
+                            const isCorrect = await verifyPasscode(deletePasscode)
+                            if (!isCorrect) {
+                              showToast('Incorrect family passcode.', 'error')
+                              setIsDeleting(false)
+                              return
+                            }
+                            
+                            setShow72HourWarning(true)
+                            setIsDeleting(false)
                           } catch (e: any) {
-                            showToast(e.message || 'Failed to delete account.', 'error')
+                            showToast(e.message || 'Failed to verify passcode.', 'error')
                             setIsDeleting(false)
                           }
                         }}
                         disabled={isDeleting}
                         className="px-6 py-3 rounded-xl font-bold text-sm bg-red-600 text-white shadow-md hover:bg-red-700 disabled:opacity-50 min-w-[120px]"
                       >
-                        {isDeleting ? 'Deleting...' : 'Verify & Delete'}
+                        {isDeleting ? 'Verifying...' : 'Verify & Delete'}
                       </button>
                     </div>
                   </div>
@@ -1533,6 +1540,62 @@ function MyRoomContent({ user, allUsers = [], initialPasscode = "" }: { user: an
               )}
             </div>
           </div>
+          
+          {show72HourWarning && (
+            <div className="fixed inset-0 z-[120] flex items-center justify-center px-4">
+              <div 
+                className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
+              />
+              
+              <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md p-8 transform transition-all animate-in zoom-in-95 duration-200 border border-slate-100">
+                <div className="flex items-center justify-center w-16 h-16 rounded-full bg-red-100 text-red-500 mb-6 mx-auto">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-8 h-8">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                
+                <h3 className="text-xl font-bold text-center text-slate-800 mb-4">
+                  Account Deletion Scheduled
+                </h3>
+                
+                <p className="text-slate-600 mb-6 text-center text-sm leading-relaxed">
+                  Your account will remain for another <strong>72 hours</strong> before permanent removal. If you log in before 72 hours is up, it will cancel the deletion process. After 72 hours, your account and all your data will be permanently deleted and you will have to create a new account to use the app.
+                </p>
+                
+                <div className="flex flex-col gap-3">
+                  <button
+                    onClick={async () => {
+                      setIsDeleting(true)
+                      try {
+                        await deleteUser(user.id, deletePasscode)
+                        showToast('Account scheduled for deletion.', 'success')
+                        router.push('/login')
+                      } catch (e: any) {
+                        showToast(e.message || 'Failed to schedule deletion.', 'error')
+                        setIsDeleting(false)
+                        setShow72HourWarning(false)
+                      }
+                    }}
+                    disabled={isDeleting}
+                    className="w-full px-6 py-3 rounded-xl font-bold text-sm bg-red-600 text-white shadow-md hover:bg-red-700 transition-all disabled:opacity-50"
+                  >
+                    {isDeleting ? 'Processing...' : 'I Understand'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShow72HourWarning(false)
+                      setIsDeletingAccount(false)
+                      setDeletePasscode('')
+                    }}
+                    disabled={isDeleting}
+                    className="w-full px-6 py-3 rounded-xl font-bold text-sm bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

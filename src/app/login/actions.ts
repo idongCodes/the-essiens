@@ -3,6 +3,7 @@
 import { cookies } from 'next/headers'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
+import { hardDeleteUser } from '@/app/family/actions'
 
 export async function login(formData: FormData) {
   const email = formData.get('email') as string
@@ -16,6 +17,25 @@ export async function login(formData: FormData) {
 
     if (!user) {
       return { success: false, message: 'Invalid email or password.' }
+    }
+
+    // Check scheduled deletion
+    if (user.deleteScheduledAt) {
+      const scheduledTime = new Date(user.deleteScheduledAt).getTime()
+      const now = Date.now()
+      const hoursPassed = (now - scheduledTime) / (1000 * 60 * 60)
+
+      if (hoursPassed >= 72) {
+        // More than 72 hours passed, actually delete the user now
+        await hardDeleteUser(user.id)
+        return { success: false, message: 'Invalid email or password.' }
+      } else {
+        // Less than 72 hours, cancel deletion
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { deleteScheduledAt: null }
+        })
+      }
     }
 
     // 2. CHECK PASSWORD
