@@ -13,6 +13,8 @@ export default function PostInput() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [isPosting, setIsPosting] = useState(false)
   const [isMediaModalOpen, setIsMediaModalOpen] = useState(false)
+  const [locationTag, setLocationTag] = useState<string | null>(null)
+  const [isGettingLocation, setIsGettingLocation] = useState(false)
   
   const fileInputRef = useRef<HTMLInputElement>(null)
   const cameraPhotoRef = useRef<HTMLInputElement>(null)
@@ -34,6 +36,47 @@ export default function PostInput() {
       video.onerror = () => resolve(false)
       video.src = URL.createObjectURL(file);
     });
+  }
+
+  const handleToggleLocation = () => {
+    if (locationTag) {
+      setLocationTag(null);
+      return;
+    }
+
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported by your browser")
+      return
+    }
+
+    setIsGettingLocation(true)
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+          if (!res.ok) throw new Error("Failed to fetch location");
+          const data = await res.json();
+          const loc = data.address.neighbourhood || data.address.suburb || data.address.city_district || data.address.town || data.address.city || data.address.village;
+          
+          if (loc) {
+            setLocationTag(loc);
+            toast.success(`Location set to ${loc}`);
+          } else {
+            toast.error("Could not determine specific location.");
+          }
+        } catch (error) {
+          console.error(error);
+          toast.error("Failed to get location name.");
+        } finally {
+          setIsGettingLocation(false);
+        }
+      },
+      (error) => {
+        setIsGettingLocation(false);
+        toast.error("Failed to get location.");
+      }
+    )
   }
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -126,6 +169,7 @@ export default function PostInput() {
     formData.append('content', content)
     if (uploadedImageUrl) formData.append('imageUrl', uploadedImageUrl)
     if (uploadedVideoUrl) formData.append('videoUrl', uploadedVideoUrl)
+    if (locationTag) formData.append('location', locationTag)
 
     const result = await createPost(formData)
     setIsPosting(false)
@@ -136,6 +180,7 @@ export default function PostInput() {
       setMediaFile(null)
       setMediaType(null)
       setPreviewUrl(null)
+      setLocationTag(null)
       if (fileInputRef.current) fileInputRef.current.value = ''
       if (cameraPhotoRef.current) cameraPhotoRef.current.value = ''
       if (cameraVideoRef.current) cameraVideoRef.current.value = ''
@@ -193,7 +238,7 @@ export default function PostInput() {
 
         {/* Toolbar */}
         <div className="flex justify-between items-center pt-2 border-t border-slate-100 mt-2">
-          <div>
+          <div className="flex gap-2">
             <button 
                onClick={() => setIsMediaModalOpen(true)}
                className="text-slate-400 hover:text-brand-sky p-1.5 rounded-full hover:bg-slate-50 transition-colors group flex items-center gap-2"
@@ -202,6 +247,19 @@ export default function PostInput() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
               </svg>
               <span className="text-xs font-medium hidden sm:inline">Add Photo/Video</span>
+            </button>
+            <button 
+               onClick={handleToggleLocation}
+               disabled={isGettingLocation}
+               className={`text-slate-400 p-1.5 rounded-full transition-colors group flex items-center gap-2 ${locationTag ? 'text-brand-sky bg-sky-50' : 'hover:text-brand-sky hover:bg-slate-50'}`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`w-6 h-6 group-hover:scale-110 transition-transform ${isGettingLocation ? 'animate-pulse' : ''}`}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+              </svg>
+              <span className="text-xs font-medium hidden sm:inline">
+                {isGettingLocation ? 'Locating...' : locationTag ? locationTag : 'Add Location'}
+              </span>
             </button>
           </div>
 

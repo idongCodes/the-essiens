@@ -22,6 +22,7 @@ export async function createPost(formData: FormData) {
   const content = formData.get('content') as string || ""
   const imageUrl = formData.get('imageUrl') as string | null
   const videoUrl = formData.get('videoUrl') as string | null
+  const location = formData.get('location') as string | null
 
   const hasText = content.trim().length > 0
   const hasMedia = !!imageUrl || !!videoUrl
@@ -35,6 +36,7 @@ export async function createPost(formData: FormData) {
       content,
       imageUrl,
       videoUrl,
+      location,
       authorId: userId
     },
     include: { author: true }

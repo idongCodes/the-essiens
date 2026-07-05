@@ -65,6 +65,7 @@ model Post {
   content        String
   imageUrl       String?
   videoUrl       String?
+  location       String?
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   isEdited       Boolean         @default(false)
