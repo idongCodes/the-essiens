@@ -20,6 +20,8 @@ interface WeatherData {
   daily: {
     sunrise: string[];
     sunset: string[];
+    temperature_2m_max: number[];
+    temperature_2m_min: number[];
   };
 }
 
@@ -52,7 +54,7 @@ export default function WeatherBriefing() {
           // Ignore reverse geocoding errors
         }
 
-        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,precipitation&daily=sunrise,sunset&timezone=auto&temperature_unit=fahrenheit&precipitation_unit=inch`);
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,precipitation&daily=sunrise,sunset,temperature_2m_max,temperature_2m_min&timezone=auto&temperature_unit=fahrenheit&precipitation_unit=inch`);
         
         if (!res.ok) throw new Error("Failed to fetch weather data");
         const data = await res.json();
@@ -96,6 +98,9 @@ export default function WeatherBriefing() {
   const precipUnit = weather.current_units.precipitation;
   const sunrise = new Date(weather.daily.sunrise[0]).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
   const sunset = new Date(weather.daily.sunset[0]).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  
+  const highTemp = Math.round(weather.daily.temperature_2m_max[0]);
+  const lowTemp = Math.round(weather.daily.temperature_2m_min[0]);
 
   return (
     <div className="relative overflow-hidden bg-gradient-to-br from-indigo-500 via-sky-500 to-emerald-400 rounded-3xl p-5 mb-8 shadow-lg text-white transition-all duration-500 hover:shadow-xl group">
@@ -126,7 +131,10 @@ export default function WeatherBriefing() {
             <span className="text-2xl font-bold tracking-tight">{currentTemp}</span>
             <span className="text-sm font-medium mt-0.5">{tempUnit}</span>
           </div>
-          <span className="text-[10px] text-indigo-50 uppercase tracking-wider mt-1 font-medium">Temp</span>
+          <div className="flex space-x-2 mt-1">
+            <span className="text-[10px] text-indigo-50 font-medium">H:{highTemp}°</span>
+            <span className="text-[10px] text-indigo-50 font-medium">L:{lowTemp}°</span>
+          </div>
         </div>
 
         {/* Precipitation */}
