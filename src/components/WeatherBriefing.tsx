@@ -52,7 +52,7 @@ export default function WeatherBriefing() {
           // Ignore reverse geocoding errors
         }
 
-        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,precipitation&daily=sunrise,sunset&timezone=auto`);
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,precipitation&daily=sunrise,sunset&timezone=auto&temperature_unit=fahrenheit&precipitation_unit=inch`);
         
         if (!res.ok) throw new Error("Failed to fetch weather data");
         const data = await res.json();
