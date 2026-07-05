@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import PostInput from "@/components/PostInput";
 import PostCard from "@/components/PostCard";
 import AnnouncementCarousel from "@/components/AnnouncementCarousel";
+import WeatherBriefing from "@/components/WeatherBriefing";
 import { getFeedData, getAnnouncements } from "./actions";
 import { prisma } from "@/lib/prisma";
 
@@ -35,6 +36,9 @@ export default async function CommonRoom() {
             Welcome home, <span className="text-brand-sky font-bold">{welcomeName}</span>.
           </h2>
         </div>
+
+        {/* WEATHER BRIEFING */}
+        <WeatherBriefing />
 
         {/* ANNOUNCEMENTS CAROUSEL */}
         <AnnouncementCarousel 
